@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  created_at        Int?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String             @id @default(cuid())
+  name          String?
+  email         String?            @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role               @default(USER)
+  accounts      Account[]
+  organizations OrganizationRole[]
+  sessions      Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id        String             @id @default(cuid())
+  slug      String             @unique
+  name      String
+  bannerUrl String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  admins    OrganizationRole[]
+  prayers   Prayer[]
+  chains    PrayerChain[]
+}
+
+model OrganizationRole {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model Prayer {
+  id               String       @id @default(cuid())
+  text             String
+  name             String?
+  email            String?
+  notify_if_prayed Boolean      @default(false)
+  isPublic         Boolean      @default(true)
+  isArchived       Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model PrayerChain {
+  id                   String              @id @default(cuid())
+  title                String
+  description          String?
+  thumbnailUrl         String?
+  start_time           DateTime
+  end_time             DateTime
+  daily_start          String
+  daily_end            String
+  block_duration_mins  Int                 @default(60)
+  max_people_per_block Int                 @default(1)
+  notify_interval_mins Int?
+  isActive             Boolean             @default(true)
+  isPublic             Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  organizationId       String
+  organization         Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  signups              PrayerChainSignup[]
+}
+
+model PrayerChainSignup {
+  id            String      @id @default(cuid())
+  startTime     DateTime
+  name          String
+  email         String?
+  notified      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  prayerChainId String
+  prayerChain   PrayerChain @relation(fields: [prayerChainId], references: [id], onDelete: Cascade)
+  // Removed email from unique constraint to allow multiple people to sign up without providing an email.
+  // The route action already checks if chain.max_people_per_block is reached.
+  // We can't use @@unique([prayerChainId, startTime, email]) because two `null` emails would violate it.
+}
+
+model MemberOtp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // bcrypt-hashed 6-digit code
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+enum Role {
+  USER
+  GLOBAL_ADMIN
+}
+
+enum ColorMode {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+model SiteSettings {
+  id           String    @id @default("default")
+  primaryColor String    @default("#6366f1")
+  colorMode    ColorMode @default(DARK)
+  lightLogoUrl String?
+  darkLogoUrl  String?
+  homePageText String    @default("A safe space to share burdens, request intercession, and lift each other up in prayer.")
+  updatedAt    DateTime  @updatedAt
+}
