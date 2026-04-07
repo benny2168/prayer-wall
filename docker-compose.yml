@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ${DATA_BASE_PATH:-./data}/db:/var/lib/postgresql/data
 
   web:
     build: .
@@ -26,6 +26,5 @@ services:
       - DATABASE_URL=postgresql://admin:admin123@db:5432/prayerwall?schema=public
     depends_on:
       - db
-
-volumes:
-  pgdata:
+    volumes:
+      - ${DATA_BASE_PATH:-./data}/uploads:/app/public/uploads
