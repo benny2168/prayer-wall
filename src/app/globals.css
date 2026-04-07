@@ -4,6 +4,7 @@
 
 @theme {
   --font-sans: var(--font-inter);
+  --font-serif: var(--font-serif);
   --font-mono: var(--font-geist-mono);
   
   /* Map Tailwind's 'theme' color group to our raw injected RGB variables */
@@ -19,15 +20,17 @@
   --color-theme-900: rgb(var(--theme-900));
   --color-theme-950: rgb(var(--theme-950));
   
-  --color-bg-base: var(--color-bg-base);
-  --color-bg-panel: var(--color-bg-panel);
-  --color-text-base: var(--color-text-base);
-  --color-text-muted: var(--color-text-muted);
-  --color-border-base: var(--color-border-base);
+  --color-bg-base: var(--tw-v-bg-base);
+  --color-bg-panel: var(--tw-v-bg-panel);
+  --color-text-base: var(--tw-v-text-base);
+  --color-text-title: var(--tw-v-text-title);
+  --color-text-muted: var(--tw-v-text-muted);
+  --color-text-theme: var(--tw-v-text-theme);
+  --color-border-base: var(--tw-v-border-base);
 
-  --color-glass: rgba(var(--theme-900), 0.3);
-  --color-glass-hover: rgba(var(--theme-800), 0.4);
-  --color-glass-border: rgba(var(--theme-500), 0.15);
+  --color-glass: var(--tw-v-glass);
+  --color-glass-hover: var(--tw-v-glass-hover);
+  --color-glass-border: var(--tw-v-glass-border);
 }
 
 :root {
@@ -46,11 +49,19 @@ body {
   min-height: 100vh;
 }
 
-/* Light mode overrides for glass components */
+/* Light mode overrides for glass components to ensure they pop on light backgrounds */
 :root[data-theme="light"] {
-  --color-glass: rgba(0, 0, 0, 0.03);
-  --color-glass-hover: rgba(0, 0, 0, 0.05);
-  --color-glass-border: rgba(0, 0, 0, 0.1);
+  --color-glass: rgba(255, 255, 255, 0.7);
+  --color-glass-hover: rgba(255, 255, 255, 0.9);
+  --color-glass-border: rgba(var(--theme-600), 0.2);
+}
+
+/* Ensure user-uploaded logos are correctly visibility-toggled by data-theme */
+:root[data-theme="dark"] .logo-light {
+  display: none !important;
+}
+:root[data-theme="light"] .logo-dark {
+  display: none !important;
 }
 
 @layer utilities {
@@ -74,7 +85,7 @@ body {
   .glass-card:hover {
     background-color: var(--color-glass-hover);
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(var(--theme-500), 0.15), 0 8px 10px -6px rgba(var(--theme-500), 0.1);
+    box-shadow: 0 20px 25px -5px rgba(var(--color-theme-500), 0.15), 0 8px 10px -6px rgba(var(--color-theme-500), 0.1);
   }
 
   .btn-primary {
@@ -91,7 +102,7 @@ body {
   .btn-primary:hover {
     background-color: var(--color-theme-500);
     transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(var(--theme-500), 0.4);
+    box-shadow: 0 0 20px rgba(var(--color-theme-500), 0.4);
   }
 
   .btn-primary:active {
@@ -102,7 +113,7 @@ body {
     position: relative;
     overflow: hidden;
     background-color: var(--color-glass);
-    color: white;
+    color: var(--color-text-base); /* Adaptive text color */
     border: 1px solid var(--color-glass-border);
     font-weight: 500;
     padding: 0.625rem 1.5rem;
@@ -112,8 +123,11 @@ body {
 
   .btn-secondary:hover {
     background-color: var(--color-glass-hover);
-    border-color: rgba(255, 255, 255, 0.2);
     transform: scale(1.02);
+  }
+
+  :root[data-theme="dark"] .btn-secondary {
+    color: white;
   }
 
   .btn-secondary:active {
@@ -132,8 +146,15 @@ body {
     -webkit-backdrop-filter: blur(4px);
   }
 
+  :root[data-theme="light"] .input-field {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(var(--theme-600), 0.3);
+    color: var(--color-text-title);
+  }
+
   .input-field::placeholder {
     color: var(--color-text-muted);
+    opacity: 0.9;
   }
 
   .input-field:focus {

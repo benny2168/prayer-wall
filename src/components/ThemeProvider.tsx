@@ -19,11 +19,18 @@ export default async function ThemeProvider() {
   const themeScript = `
     (function() {
       const mode = '${settings.colorMode}';
+      let isDark = false;
       if (mode === 'SYSTEM') {
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       } else {
-        document.documentElement.setAttribute('data-theme', mode.toLowerCase());
+        isDark = mode === 'DARK';
+      }
+      
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
     })();
   `;

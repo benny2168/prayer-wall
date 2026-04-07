@@ -10,7 +10,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'avatars.planningcenteronline.com',
+        hostname: '*.planningcenteronline.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'planningcenteronline.com',
+      },
+      {
+        protocol: 'http',
+        hostname: '*.planningcenteronline.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
       },
     ],
   },

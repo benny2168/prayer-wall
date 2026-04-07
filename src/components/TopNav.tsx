@@ -5,7 +5,7 @@ import Link from "next/link";
  */
 export default function TopNav() {
   return (
-    <div className="absolute top-4 right-4 sm:right-6 z-20">
+    <div className="absolute top-8 right-4 sm:right-6 z-20">
       <Link
         href="/my-signups"
         className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-theme-500/50 text-theme-500 hover:bg-theme-500/10 dark:bg-theme-500 dark:text-white dark:border-theme-500 dark:hover:bg-theme-600 transition-all font-semibold text-xs sm:text-sm shadow-sm"

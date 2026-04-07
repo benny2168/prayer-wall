@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import GlobalHeader from "@/components/GlobalHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -46,53 +48,40 @@ export default async function ChainListPage({
   }
 
   return (
-    <main className="min-h-screen relative p-4 sm:p-12 overflow-x-hidden">
-      <div className="max-w-4xl mx-auto z-10 relative">
-        {/* Logo row: logo on left (links home), back button on right */}
-        <div className="mb-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            {siteSettings?.lightLogoUrl && (
-              <div className="relative h-10 w-32 dark:hidden">
-                <Image 
-                  src={siteSettings.lightLogoUrl} 
-                  alt="Site Logo" 
-                  fill
-                  sizes="128px"
-                  className="object-contain drop-shadow-md object-left" 
-                />
-              </div>
-            )}
-            {siteSettings?.darkLogoUrl && (
-              <div className={`relative h-10 w-32 ${siteSettings?.lightLogoUrl ? 'hidden dark:block' : ''}`}>
-                <Image 
-                  src={siteSettings.darkLogoUrl} 
-                  alt="Site Logo" 
-                  fill
-                  sizes="128px"
-                  className="object-contain drop-shadow-md object-left" 
-                />
-              </div>
-            )}
-          </Link>
-          <Link
-            href={`/${orgSlug}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[--color-glass-border] text-[--color-text-muted] hover:text-[--color-text-base] hover:border-[--color-text-muted]/40 transition-all text-xs sm:text-sm font-medium"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            {organization.name}
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[--color-bg-base]">
+      {/* Hero */}
+      <header className="relative overflow-hidden">
+        {/* Gradient backdrop — ends before the cards */}
+        <div className="absolute inset-x-0 top-0 h-[480px] sm:h-[520px] bg-gradient-to-b from-theme-500/20 via-theme-500/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-[480px] sm:h-[520px] opacity-[0.03] pointer-events-none" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }} />
 
-        <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[--color-text-base] mb-2 shadow-sm drop-shadow-md">
-            Prayer Chains
-          </h1>
-          <p className="text-[--color-text-muted] text-lg">
-            Choose an initiative to commit to praying alongside {organization.name}.
-          </p>
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <div className="relative max-w-3xl mx-auto px-6 pt-24 sm:pt-32 pb-16 sm:pb-20 text-center">
+            {/* 1. Back link moved ABOVE the title */}
+            <div className="mb-8">
+              <Link
+                href={`/${orgSlug}`}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[--color-text-muted] hover:text-[--color-text-base] transition-colors"
+                >
+                <ArrowLeft className="w-4 h-4" />
+                Back to {organization.name}
+              </Link>
+            </div>
+
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 text-[--color-text-base]">
+              Prayer Chains
+            </h1>
+            <p className="text-lg text-[--color-text-muted] max-w-xl mx-auto leading-relaxed">
+              Choose an initiative to commit to praying alongside {organization.name}.
+            </p>
+          </div>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <section className="max-w-6xl mx-auto px-6 pb-24 relative z-10">
 
         {organization.chains.length > 0 ? (
           <div className="grid grid-cols-1 gap-6">
@@ -150,7 +139,7 @@ export default async function ChainListPage({
             <p className="text-[--color-text-muted]">Check back soon for upcoming prayer initiatives.</p>
           </div>
         )}
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }

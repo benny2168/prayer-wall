@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import * as motion from "framer-motion/client";
 import Image from "next/image";
-import TopNav from "@/components/TopNav";
+import GlobalHeader from "@/components/GlobalHeader";
+import { Church, HandHeart, ArrowRight, Link2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -12,103 +13,99 @@ export default async function Home() {
     prisma.siteSettings.findUnique({ where: { id: "default" } })
   ]);
 
+  const siteTagline = "LIFTING EACH OTHER UP";
+  const siteSubtitle = "MTCD Carrollton Prayer Wall";
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start pt-16 sm:pt-20 p-6 sm:p-16 relative overflow-hidden">
-      <TopNav />
-      <div className="z-10 max-w-5xl w-full flex flex-col items-center text-center space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="flex flex-col items-center"
-        >
-          {(siteSettings?.lightLogoUrl || siteSettings?.darkLogoUrl) && (
-            <div className="relative w-48 h-32 sm:w-64 sm:h-40 mb-4 sm:mb-8">
-              {siteSettings?.lightLogoUrl && (
-                <Image
-                  src={siteSettings.lightLogoUrl}
-                  alt="Site Logo"
-                  fill
-                  sizes="(max-width: 640px) 12rem, 16rem"
-                  className="object-contain dark:hidden"
-                  priority
-                />
-              )}
-              {siteSettings?.darkLogoUrl && (
-                <Image
-                  src={siteSettings.darkLogoUrl}
-                  alt="Site Logo"
-                  fill
-                  sizes="(max-width: 640px) 12rem, 16rem"
-                  className={`object-contain ${siteSettings?.lightLogoUrl ? 'hidden dark:block' : ''}`}
-                  priority
-                />
-              )}
-            </div>
-          )}
+    <div className="min-h-screen bg-[--color-bg-base]">
+      {/* Hero */}
+      <header className="relative overflow-hidden">
+        {/* Gradient backdrop — ends before the cards */}
+        <div className="absolute inset-x-0 top-0 h-[480px] sm:h-[520px] bg-gradient-to-b from-theme-500/20 via-theme-500/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-[480px] sm:h-[520px] opacity-[0.03] pointer-events-none" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }} />
 
-          <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-theme-400 to-theme-500 mb-6 drop-shadow-md">
-            Prayer Wall
-          </h1>
-          <p className="text-lg sm:text-2xl text-[--color-text-muted] max-w-2xl mx-auto leading-relaxed">
-            {siteSettings?.homePageText || "A safe space to share burdens, request intercession, and lift each other up in prayer."}
-          </p>
-        </motion.div>
+        <GlobalHeader siteSettings={siteSettings ? { lightLogoUrl: siteSettings.lightLogoUrl, darkLogoUrl: siteSettings.darkLogoUrl } : null} transparent={true} />
 
-        <motion.div
-          className="w-full max-w-3xl"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          {organizations.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {organizations.map((org: any, index: number) => (
-                <Link key={org.id} href={`/${org.slug}`}>
-                  <motion.div
-                    className="glass-card p-6 flex flex-col items-center justify-center text-center h-full group"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + index * 0.1 }}
-                  >
-                    <h2 className="text-2xl font-bold text-[--color-text-base] group-hover:text-primary transition-colors">
-                      {org.name}
-                    </h2>
-                    <p className="text-[--color-text-muted] mt-2 text-sm">View Prayer Wall</p>
-                  </motion.div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="glass-panel p-10 flex flex-col items-center justify-center text-center space-y-6">
-              <div className="w-16 h-16 rounded-full bg-[--color-bg-panel]/50 flex items-center justify-center mb-2">
-                <svg className="w-8 h-8 text-[--color-text-muted]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-semibold text-[--color-text-base]">No organizations found</h2>
-              <p className="text-[--color-text-muted]">
-                It looks like no organizations have been set up yet. If you are an admin, please visit the dashboard to get started.
-              </p>
-              <Link href="/admin">
-                <button className="btn-primary mt-4">Go to Admin Portal</button>
+        <div className="relative max-w-3xl mx-auto px-6 pt-24 sm:pt-32 pb-16 sm:pb-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <p className="text-sm font-medium text-theme-500 tracking-wider uppercase mb-4">
+              {siteTagline}
+            </p>
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 text-[--color-text-base]">
+              {siteSubtitle}
+            </h1>
+            <p className="text-lg text-[--color-text-muted] max-w-xl mx-auto leading-relaxed">
+              {siteSettings?.homePageText || "A space to share burdens, request intercession, and lift each other up in prayer."}
+            </p>
+          </motion.div>
+        </div>
+      </header>
+
+      {/* Organizations */}
+      <section className="max-w-6xl mx-auto px-6 pb-24 relative z-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {organizations.length > 0 ? organizations.map((org: any, i: number) => (
+            <motion.div
+              key={org.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1, duration: 0.4 }}
+            >
+              <Link
+                href={`/${org.slug}`}
+                className="group block glass-card p-6"
+              >
+                {org.bannerUrl ? (
+                  <div className="relative w-full h-40 mb-4 rounded-xl overflow-hidden bg-white/5">
+                    <Image
+                      src={org.bannerUrl}
+                      alt={org.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-32 rounded-xl bg-gradient-to-br from-theme-500/10 to-theme-300/10 flex items-center justify-center mb-4 border border-[--color-glass-border]">
+                    <Church className="w-10 h-10 text-theme-500/40" />
+                  </div>
+                )}
+                <h3 className="font-serif text-xl font-semibold mb-2 group-hover:text-theme-500 transition-colors text-[--color-text-base]">
+                  {org.name}
+                </h3>
+                <p className="text-sm text-[--color-text-muted] line-clamp-2 mb-4 h-10 overflow-hidden">
+                  Building hope through faith, love, and prayer. Every prayer matters, every voice is heard.
+                </p>
+                <div className="flex items-center gap-4 text-sm mt-2">
+                  <span className="flex items-center gap-1.5 text-theme-500 font-medium">
+                    <HandHeart className="w-4 h-4" />
+                    Prayer Wall
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[--color-text-muted] transition-colors group-hover:text-[--color-text-base]">
+                    <Link2 className="w-4 h-4" />
+                    Prayer Chains
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[--color-text-muted] ml-auto group-hover:text-theme-500 group-hover:translate-x-1 transition-all" />
+                </div>
+              </Link>
+            </motion.div>
+          )) : (
+            <div className="col-span-full text-center py-16">
+              <Church className="w-12 h-12 text-[--color-text-muted]/30 mx-auto mb-4" />
+              <h3 className="font-serif text-xl font-semibold mb-2 text-[--color-text-base]">No Organizations Yet</h3>
+              <p className="text-[--color-text-muted] mb-6">Get started by creating an organization in the admin portal.</p>
+              <Link href="/admin/organizations">
+                <button className="btn-primary">Go to Admin</button>
               </Link>
             </div>
           )}
-        </motion.div>
-      </div>
-      <div className="absolute bottom-6 w-full flex justify-center">
-        <Link
-          href="/admin"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[--color-glass-border] text-[--color-text-muted] hover:text-[--color-text-base] hover:border-[--color-text-muted]/40 transition-all text-xs font-medium"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          Admin Login
-        </Link>
-      </div>
-    </main>
+        </div>
+      </section>
+    </div>
   );
 }

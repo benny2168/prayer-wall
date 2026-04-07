@@ -41,8 +41,12 @@ export default async function PrayersAdminPage({ searchParams }: { searchParams:
 
   return (
     <div className="p-8 max-w-6xl mx-auto w-full">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[--color-text-base]">Prayer Management</h1>
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="text-center md:text-left">
+          <p className="text-xs font-bold text-theme-500 tracking-widest uppercase mb-2">MTCD ADMINISTRATIVE PORTAL</p>
+          <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[--color-text-title] leading-tight">Intercessor Requests</h1>
+          <p className="text-[--color-text-muted] mt-3 text-lg max-w-2xl leading-relaxed">Review, moderate, and archive shared intercession requests across all organizations.</p>
+        </div>
         
         <div className="flex bg-[--color-bg-panel] rounded-lg p-1 border border-[--color-border-base]">
           <a 

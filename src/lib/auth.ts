@@ -43,6 +43,36 @@ export const authOptions: AuthOptions = {
         return null;
       },
     }),
+    CredentialsProvider({
+      id: "member-otp",
+      name: "OTP",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        code: { label: "Code", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.code) return null;
+        
+        const normalizedEmail = credentials.email.toLowerCase().trim();
+        const record = await prisma.memberOtp.findFirst({
+          where: { email: normalizedEmail, code: credentials.code },
+        });
+
+        if (!record || record.expiresAt < new Date()) {
+          return null;
+        }
+
+        // OTP valid, delete it so it can't be reused
+        await prisma.memberOtp.delete({ where: { id: record.id } });
+
+        return {
+          id: normalizedEmail,
+          name: record.name || "Verified Member",
+          email: normalizedEmail,
+          role: "MEMBER",
+        } as any;
+      },
+    }),
     // Planning Center OAuth
     {
       id: "planning-center",
@@ -69,17 +99,29 @@ export const authOptions: AuthOptions = {
       },
       profile(profile: any) {
         const attributes = profile.data?.attributes || {};
-        const email = attributes.primary_email_address || null;
+        
+        // PCO can return email in multiple places depending on account settings
+        const email = (
+          attributes.login_identifier || 
+          attributes.primary_email_address || 
+          null
+        )?.toLowerCase().trim();
+
         const name =
           attributes.name ||
           `${attributes.first_name || ""} ${attributes.last_name || ""}`.trim() ||
           "PCO User";
 
+        // Planning Center typically uses 'avatar_url' in its JSON API responses
+        const image = attributes.avatar_url || attributes.avatar || attributes.photo_thumbnail_url || null;
+
+        console.log("[Auth] PCO Profile mapping:", { id: profile.data?.id, name, email, image });
+
         return {
           id: String(profile.data?.id || "unknown"),
           name,
           email,
-          image: attributes.avatar || null,
+          image,
         };
       },
       clientId: process.env.PLANNING_CENTER_CLIENT_ID!,
@@ -91,26 +133,35 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async jwt({ token, user }: { token: any, user: any }) {
+    async jwt({ token, user, profile }: { token: any, user: any, profile?: any }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
-        token.email = user.email;
+        token.email = user.email || (profile as any)?.data?.attributes?.login_identifier || (profile as any)?.data?.attributes?.primary_email_address;
         token.picture = user.image;
+        token.phoneNumber = user.phoneNumber;
+
+        console.log("[Auth] JWT callback - user identified:", { id: token.id, email: token.email });
+
         // Flag local admin sessions so we can grant full access
         if (user.isLocalAdmin) {
           token.isLocalAdmin = true;
           token.role = "GLOBAL_ADMIN";
+        } else if (user.role) {
+          token.role = user.role;
         }
       }
       // For PCO users, load role from DB on every token refresh
-      if (token.id && !token.isLocalAdmin) {
+      if (token.id && !token.isLocalAdmin && token.role !== "MEMBER") {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { role: true },
+            select: { role: true, phoneNumber: true },
           });
-          if (dbUser) token.role = dbUser.role;
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.phoneNumber = dbUser.phoneNumber;
+          }
         } catch {}
       }
       return token;
@@ -119,16 +170,40 @@ export const authOptions: AuthOptions = {
     async session({ session, token }: { session: any, token: any }) {
       if (session?.user) {
         session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.phoneNumber = token.phoneNumber;
         session.user.role = token.role;
+        session.user.image = token.picture; // Synchronize with token.picture
         session.user.isLocalAdmin = token.isLocalAdmin ?? false;
       }
       return session;
+    },
+    async signIn({ user, account, profile }: { user: any, account: any, profile?: any }) {
+      if (account?.provider === "planning-center" && user?.id && profile) {
+        // Planning Center typically uses 'avatar_url'
+        const attributes = profile?.data?.attributes || {};
+        const image = attributes.avatar_url || attributes.avatar || attributes.photo_thumbnail_url;
+        
+        if (image) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { image },
+            });
+            console.log("[Auth] Updated user profile picture from PCO:", user.id);
+          } catch (e) {
+            console.error("[Auth] Failed to update profile picture:", e);
+          }
+        }
+      }
+      return true;
     },
   },
   session: {
     strategy: "jwt",
   },
   pages: {
-    signIn: "/admin/login",
+    signIn: "/login",
   },
 };

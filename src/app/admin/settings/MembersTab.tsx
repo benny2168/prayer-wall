@@ -15,6 +15,32 @@ type User = {
 };
 type Org = { id: string; name: string; slug: string };
 
+function UserAvatar({ user }: { user: User }) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div className="w-10 h-10 rounded-full bg-[--color-border-base] flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+      {user.image && !imgError ? (
+        <Image 
+          src={user.image} 
+          alt="" 
+          fill
+          sizes="40px"
+          unoptimized={user.image.includes('planningcenteronline')}
+          onError={() => setImgError(true)}
+          className="object-cover" 
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-theme-500/10 text-theme-600 border border-theme-200">
+           <span className="text-sm font-bold uppercase">
+            {(user.name || user.email || "?")[0]}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MembersTab({
   users: initialUsers,
   organizations,
@@ -97,7 +123,7 @@ export default function MembersTab({
             Manage who has access to the admin portal and at what level.
           </p>
         </div>
-        <span className="text-xs text-[--color-text-muted] bg-[--color-bg-panel] px-3 py-1 rounded-full">
+        <span className="text-xs text-[--color-text-muted] bg-[--color-bg-panel] px-3 py-1 rounded-full border border-[--color-border-base]">
           {users.length} user{users.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -120,21 +146,7 @@ export default function MembersTab({
               >
                 {/* User Row */}
                 <div className="flex items-center gap-4 p-4">
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-[--color-border-base] flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-                    {user.image ? (
-                      <Image 
-                        src={user.image} 
-                        alt="" 
-                        fill
-                        className="object-cover" 
-                      />
-                    ) : (
-                      <span className="text-[--color-text-muted] text-sm font-medium">
-                        {(user.name || user.email || "?")[0].toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                  <UserAvatar user={user} />
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -168,7 +180,7 @@ export default function MembersTab({
                     {organizations.length > 0 && user.role !== "GLOBAL_ADMIN" && (
                       <button
                         onClick={() => setExpandedUser(isExpanded ? null : user.id)}
-                        className="ml-1 text-[--color-text-muted] hover:text-[--color-text-base] transition-colors text-xs flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[--color-bg-panel]"
+                        className="ml-1 text-[--color-text-muted] hover:text-[--color-text-base] transition-colors text-xs flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[--color-bg-panel] border border-transparent hover:border-[--color-border-base]"
                       >
                         <span>Orgs</span>
                         <span>{isExpanded ? "▲" : "▼"}</span>
@@ -182,7 +194,7 @@ export default function MembersTab({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="border-t border-[--color-border-base] p-4 bg-[--color-bg-base]"
+                    className="border-t border-[--color-border-base] p-4 bg-[--color-bg-base]/50"
                   >
                     <p className="text-xs text-[--color-text-muted] mb-3 font-medium uppercase tracking-wide">
                       Organization Admin Access

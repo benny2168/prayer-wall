@@ -12,7 +12,7 @@ const smtpConfig = {
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
-export async function sendPrayedForNotification(toEmail: string, prayerText: string) {
+export async function sendPrayedForNotification(toEmail: string, prayerText: string, prayedByName: string = "Someone") {
   if (!process.env.SMTP_USER) {
     console.warn("SMTP credentials missing. Skipping email.");
     return;
@@ -21,15 +21,15 @@ export async function sendPrayedForNotification(toEmail: string, prayerText: str
   const mailOptions = {
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
-    subject: "Someone just prayed for you!",
+    subject: `${prayedByName} just prayed for you!`,
     html: `
       <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; color: #333;">
-        <h2 style="color: #6366f1;">Someone prayed for your request</h2>
+        <h2 style="color: #6366f1;">${prayedByName} prayed for your request</h2>
         <p>This is a notification to let you know that a member of the community just lifted up your prayer request:</p>
         <blockquote style="background: #f8fafc; padding: 16px; border-left: 4px solid #818cf8; margin: 20px 0; font-style: italic;">
           "${prayerText}"
         </blockquote>
-        <p>May you feel encouraged and strengthened.</p>
+        <p>May you feel encouraged and strengthened by this support.</p>
       </div>
     `,
   };

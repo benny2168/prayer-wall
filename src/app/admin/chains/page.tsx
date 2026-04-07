@@ -42,8 +42,12 @@ export default async function AdminChainsPage() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto w-full">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[--color-text-base]">Prayer Chains</h1>
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="text-center md:text-left">
+          <p className="text-xs font-bold text-theme-500 tracking-widest uppercase mb-2">MTCD ADMINISTRATIVE PORTAL</p>
+          <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[--color-text-title] leading-tight">Prayer Chain Ecosystem</h1>
+          <p className="text-[--color-text-muted] mt-3 text-lg max-w-2xl leading-relaxed">Configure 24/7 prayer coverage, manage intercessor schedules, and monitor engagement.</p>
+        </div>
         
         {(isGlobalAdmin || userOrgIds.length > 0) && (
           <Link href="/admin/chains/new">
@@ -58,37 +62,41 @@ export default async function AdminChainsPage() {
       <div className="space-y-4">
         {chains.map((chain: any) => (
           <div key={chain.id} className="glass-panel p-6 flex flex-col md:flex-row justify-between md:items-center gap-6">
-            <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${chain.isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-500/20 text-[--color-text-muted] border border-slate-500/30'}`}>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-widest ${chain.isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-500/20 text-[--color-text-muted] border border-slate-500/30'}`}>
                   {chain.isActive ? "Active" : "Inactive"}
                 </span>
-                <span className="text-[--color-text-muted] text-sm font-medium">{chain.organization.name}</span>
+                <span className="text-[--color-text-muted] text-xs font-bold uppercase tracking-widest bg-[--color-bg-panel]/50 px-2 py-0.5 rounded border border-[--color-border-base]">{(chain as any).organization.name}</span>
               </div>
-              <h3 className="text-xl font-bold text-[--color-text-base] mb-2">{chain.title}</h3>
-              <div className="flex flex-wrap text-sm text-[--color-text-muted] gap-4">
-                <p>🗓️ {new Date(chain.start_time).toLocaleDateString()} - {new Date(chain.end_time).toLocaleDateString()}</p>
-                <p>⏰ {chain.daily_start} to {chain.daily_end} (Daily)</p>
-                <p>⏱️ {chain.block_duration_mins} min blocks</p>
+              <h3 className="text-xl font-bold text-[--color-text-base] mb-3">{chain.title}</h3>
+              <div className="flex flex-wrap text-[11px] font-bold uppercase tracking-wider text-[--color-text-muted] gap-y-2 gap-x-4">
+                <p className="flex items-center gap-1.5 bg-[--color-bg-panel]/30 px-2 py-1 rounded-md"><span>🗓️</span> {new Date(chain.start_time).toLocaleDateString()} - {new Date(chain.end_time).toLocaleDateString()}</p>
+                <p className="flex items-center gap-1.5 bg-[--color-bg-panel]/30 px-2 py-1 rounded-md"><span>⏰</span> {chain.daily_start} to {chain.daily_end}</p>
+                <p className="flex items-center gap-1.5 bg-[--color-bg-panel]/30 px-2 py-1 rounded-md"><span>⏱️</span> {chain.block_duration_mins}m blocks</p>
               </div>
-              <div className="mt-3">
-                <a href={`/${chain.organization.slug}/chain`} target="_blank" rel="noopener noreferrer" className="text-sm text-theme-400 hover:text-indigo-300 transition-colors flex items-center w-fit">
-                  View Public Prayer Chain <span className="ml-1 text-[10px]">↗</span>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href={`/admin/chains/${chain.id}`}>
+                  <button className="btn-secondary py-1 px-3 text-[10px] flex items-center gap-2">
+                    ⚙️ Manage Schedule
+                  </button>
+                </Link>
+                <a 
+                  href={`/${chain.organization.slug}/chain`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="btn-secondary py-1 px-3 text-[10px] border-theme-500/30 text-theme-500 hover:bg-theme-500/5 transition-all flex items-center gap-2"
+                >
+                  <span className="text-[10px]">↗</span> View Live Chain
                 </a>
               </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex md:flex-col items-center justify-between bg-[--color-bg-panel]/50 p-4 rounded-xl border border-[--color-border-base]/50 text-center min-w-[120px]">
-                <span className="text-3xl font-bold text-theme-400">{chain._count.signups}</span>
-                <span className="text-[--color-text-muted] text-sm font-medium">Total Signups</span>
+            <div className="flex flex-col sm:flex-row md:flex-col items-center gap-4">
+              <div className="flex flex-col items-center justify-center bg-[--color-bg-panel]/50 p-4 rounded-xl border border-[--color-border-base]/50 text-center min-w-[120px] shadow-sm">
+                <span className="text-3xl font-bold text-theme-400">{(chain as any)._count.signups}</span>
+                <span className="text-[10px] font-bold text-[--color-text-muted] uppercase tracking-widest mt-1">Total Signups</span>
               </div>
-              <div className="flex items-center gap-2 justify-end">
-                <Link href={`/admin/chains/${chain.id}`}>
-                  <button className="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5">
-                    <span>⚙️</span>
-                    <span>Edit & Manage</span>
-                  </button>
-                </Link>
+              <div className="self-center">
                 <DeleteButton id={chain.id} action={deletePrayerChain} itemType="prayer chain" />
               </div>
             </div>

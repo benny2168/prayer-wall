@@ -49,4 +49,6 @@ ENV HOSTNAME="0.0.0.0"
 
 # Note: Before running the Next.js server, we should push to DB. This can be run via a shell script entrypoint, 
 # or handled separately. For simplicity, we just start the app.
-CMD ["npm", "start"]
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+
+CMD ["sh", "-c", "npm run cron & npm start"]

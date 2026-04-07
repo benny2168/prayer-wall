@@ -78,16 +78,18 @@ export function buildCssString(
   mode: "LIGHT" | "DARK" | "SYSTEM"
 ): string {
   const getVars = (dark: boolean) => `
-    --color-bg-base: ${dark ? `rgb(${palette.scale["950"]})` : `rgb(${palette.scale["50"]})`};
-    --color-bg-panel: ${dark ? `rgb(${palette.scale["900"]})` : "#ffffff"};
-    --color-text-base: ${dark ? "#f8fafc" : "#0f172a"};
-    --color-text-muted: ${dark ? `rgb(${palette.scale["300"]})` : `rgb(${palette.scale["700"]})`};
-    --color-border-base: ${dark ? `rgba(${palette.scale["400"]}, 0.2)` : `rgba(${palette.scale["500"]}, 0.2)`};
+    --tw-v-bg-base: ${dark ? `rgb(${palette.scale["950"]})` : `rgb(${palette.scale["50"]})`};
+    --tw-v-bg-panel: ${dark ? `rgb(${palette.scale["900"]})` : "#ffffff"};
+    --tw-v-text-base: ${dark ? "#ffffff" : `rgb(${palette.scale["950"]})`};
+    --tw-v-text-title: ${dark ? "#ffffff" : `rgb(${palette.scale["900"]})`};
+    --tw-v-text-muted: ${dark ? "#94a3b8" : `rgb(${palette.scale["700"]})`};
+    --tw-v-text-theme: ${dark ? `rgb(${palette.scale["300"]})` : `rgb(${palette.scale["700"]})`};
+    --tw-v-border-base: ${dark ? `rgba(${palette.scale["400"]}, 0.2)` : `rgba(${palette.scale["500"]}, 0.25)`};
 
     /* Additional layer for settings glass */
-    --color-glass: ${dark ? `rgba(15, 23, 42, 0.4)` : `rgba(255, 255, 255, 0.7)`};
-    --color-glass-hover: ${dark ? `rgba(30, 41, 59, 0.5)` : `rgba(255, 255, 255, 0.9)`};
-    --color-glass-border: ${dark ? `rgba(255, 255, 255, 0.05)` : `rgba(0, 0, 0, 0.05)`};
+    --tw-v-glass: ${dark ? `rgba(${palette.scale["900"].replace(/ /g, ', ')}, 0.45)` : `rgba(${palette.scale["50"].replace(/ /g, ', ')}, 0.85)`};
+    --tw-v-glass-hover: ${dark ? `rgba(${palette.scale["800"].replace(/ /g, ', ')}, 0.55)` : `rgba(${palette.scale["100"].replace(/ /g, ', ')}, 0.95)`};
+    --tw-v-glass-border: ${dark ? `rgba(255, 255, 255, 0.08)` : `rgba(${palette.scale["500"].replace(/ /g, ', ')}, 0.2)`};
   `;
 
   const commonVars = `
@@ -102,24 +104,38 @@ export function buildCssString(
       :root {
         ${commonVars}
       }
+      /* Fallback for when data-theme script hasn't run */
       @media (prefers-color-scheme: light) {
-        :root {
+        :root:not([data-theme="dark"]) {
           ${getVars(false)}
         }
       }
       @media (prefers-color-scheme: dark) {
-        :root {
+        :root:not([data-theme="light"]) {
           ${getVars(true)}
         }
+      }
+      /* Explicit forced overrides by the client toggle button */
+      :root[data-theme="light"] {
+        ${getVars(false)}
+      }
+      :root[data-theme="dark"] {
+        ${getVars(true)}
       }
     `;
   }
 
-  // Pure LIGHT or DARK mode
+  // Pure LIGHT or DARK mode base, but still allow local override
   return `
     :root {
       ${commonVars}
       ${getVars(mode === "DARK")}
+    }
+    :root[data-theme="light"] {
+      ${getVars(false)}
+    }
+    :root[data-theme="dark"] {
+      ${getVars(true)}
     }
   `;
 }

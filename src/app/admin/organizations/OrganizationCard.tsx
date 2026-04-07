@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import DeleteButton from "@/components/DeleteButton";
-import { deleteOrganization, updateOrganizationBanner, clearOrganizationBanner } from "@/app/admin/actions";
+import { deleteOrganization, updateOrganizationBanner, clearOrganizationBanner, updateOrganizationTimezone } from "@/app/admin/actions";
+import { Globe } from "lucide-react";
 
 interface OrgProps {
   org: any;
@@ -47,40 +48,64 @@ export default function OrganizationCard({ org, isAdmin }: OrgProps) {
           </div>
         )}
         
-        <h3 className="font-bold text-lg text-[--color-text-base]">{org.name}</h3>
-        <div className="flex items-center space-x-3 mt-1">
-          <p className="text-[--color-text-muted] text-sm bg-[--color-bg-panel]/50 px-2 py-0.5 rounded-md">/{org.slug}</p>
-          <a href={`/${org.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs text-theme-400 hover:text-sky-300 transition-colors flex items-center">
-            View Public Wall <span className="ml-1 text-[10px]">↗</span>
+        <h3 className="font-bold text-xl text-[--color-text-base]">{org.name}</h3>
+        <div className="flex items-center gap-3 mt-2">
+          <p className="text-[--color-text-muted] text-xs font-bold uppercase tracking-widest bg-[--color-bg-panel]/50 px-2.5 py-1 rounded-lg border border-[--color-border-base]">/{org.slug}</p>
+          <a 
+            href={`/${org.slug}`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn-secondary py-1 px-3 text-[10px] flex items-center gap-2"
+          >
+            <Globe className="w-3 h-3" />
+            View Live Wall
           </a>
         </div>
 
         {isAdmin && (
-          <div className="mt-3 flex items-center gap-3">
-            <input 
-              type="file" 
-              id={`banner-upload-${org.id}`}
-              accept="image/*" 
-              className="hidden"
-              onChange={handleBannerUpload}
-              disabled={loading}
-            />
-            <label 
-              htmlFor={`banner-upload-${org.id}`}
-              className="text-xs font-medium text-[--color-text-muted] hover:text-[--color-text-base] cursor-pointer transition-colors px-2 py-1 rounded bg-[--color-bg-panel] border border-[--color-border-base] hover:border-theme-500"
-            >
-              {loading ? "Uploading..." : org.bannerUrl ? "Change Banner" : "Upload Banner"}
-            </label>
-            
-            {org.bannerUrl && (
-              <button 
-                onClick={handleClearBanner}
-                disabled={loading}
-                className="text-xs font-medium text-red-500 hover:text-red-400 transition-colors"
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 bg-[--color-bg-panel] border border-[--color-border-base] rounded-lg px-3 py-1.5 focus-within:border-theme-500 transition-colors">
+              <Globe className="w-3.5 h-3.5 text-theme-500" />
+              <select 
+                defaultValue={org.timezone}
+                onChange={(e) => updateOrganizationTimezone(org.id, e.target.value)}
+                className="bg-transparent text-xs font-bold text-[--color-text-base] outline-none"
               >
-                Clear
-              </button>
-            )}
+                <option value="UTC">UTC</option>
+                <option value="America/New_York">Eastern (ET)</option>
+                <option value="America/Chicago">Central (CT)</option>
+                <option value="America/Denver">Mountain (MT)</option>
+                <option value="America/Los_Angeles">Pacific (PT)</option>
+                <option value="Europe/London">London</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input 
+                type="file" 
+                id={`banner-upload-${org.id}`}
+                accept="image/*" 
+                className="hidden"
+                onChange={handleBannerUpload}
+                disabled={loading}
+              />
+              <label 
+                htmlFor={`banner-upload-${org.id}`}
+                className="text-xs font-medium text-[--color-text-muted] hover:text-[--color-text-base] cursor-pointer transition-colors px-2 py-1 rounded bg-[--color-bg-panel] border border-[--color-border-base] hover:border-theme-500"
+              >
+                {loading ? "Uploading..." : org.bannerUrl ? "Change Banner" : "Upload Banner"}
+              </label>
+              
+              {org.bannerUrl && (
+                <button 
+                  onClick={handleClearBanner}
+                  disabled={loading}
+                  className="text-xs font-medium text-red-500 hover:text-red-400 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

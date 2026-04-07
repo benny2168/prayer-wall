@@ -11,7 +11,7 @@ export default async function ChainDetailsPage({ params }: { params: { id: strin
   const user = session?.user as any;
   const { id } = await params;
 
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/login");
 
   const chain = await prisma.prayerChain.findUnique({
     where: { id },

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyMemberToken, COOKIE_NAME } from "@/lib/member-session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ signupId: string }> }
 ) {
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  const email = token ? await verifyMemberToken(token) : null;
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email;
 
   if (!email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,13 +16,16 @@ export async function DELETE(
 
   const { signupId } = await params;
 
-  // Verify ownership before deleting
-  const signup = await prisma.prayerChainSignup.findUnique({
-    where: { id: signupId },
+  // Verify ownership before deleting (case-insensitive)
+  const signup = await prisma.prayerChainSignup.findFirst({
+    where: { 
+      id: signupId,
+      email: { equals: email, mode: 'insensitive' }
+    },
   });
 
-  if (!signup || signup.email !== email) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!signup) {
+    return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
   }
 
   await prisma.prayerChainSignup.delete({ where: { id: signupId } });

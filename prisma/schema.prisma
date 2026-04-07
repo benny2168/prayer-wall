@@ -40,9 +40,11 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role               @default(USER)
+  phoneNumber   String?
   accounts      Account[]
   organizations OrganizationRole[]
   sessions      Session[]
+  activityLogs  ActivityLog[]
 }
 
 model VerificationToken {
@@ -54,15 +56,17 @@ model VerificationToken {
 }
 
 model Organization {
-  id        String             @id @default(cuid())
-  slug      String             @unique
-  name      String
-  bannerUrl String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  admins    OrganizationRole[]
-  prayers   Prayer[]
-  chains    PrayerChain[]
+  id           String             @id @default(cuid())
+  slug         String             @unique
+  name         String
+  bannerUrl    String?
+  createdAt    DateTime           @default(now())
+  timezone     String             @default("UTC")
+  updatedAt    DateTime           @updatedAt
+  admins       OrganizationRole[]
+  prayers      Prayer[]
+  chains       PrayerChain[]
+  activityLogs ActivityLog[]
 }
 
 model OrganizationRole {
@@ -81,6 +85,8 @@ model Prayer {
   name             String?
   email            String?
   notify_if_prayed Boolean      @default(false)
+  prayer_count     Int          @default(0)
+  intercessorIds   String[]     @default([])
   isPublic         Boolean      @default(true)
   isArchived       Boolean      @default(false)
   createdAt        DateTime     @default(now())
@@ -115,7 +121,9 @@ model PrayerChainSignup {
   startTime     DateTime
   name          String
   email         String?
+  phoneNumber   String?
   notified      Boolean     @default(false)
+  wantsReminder Boolean     @default(true)
   createdAt     DateTime    @default(now())
   prayerChainId String
   prayerChain   PrayerChain @relation(fields: [prayerChainId], references: [id], onDelete: Cascade)
@@ -127,6 +135,7 @@ model PrayerChainSignup {
 model MemberOtp {
   id        String   @id @default(cuid())
   email     String
+  name      String?
   code      String   // bcrypt-hashed 6-digit code
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -152,5 +161,33 @@ model SiteSettings {
   lightLogoUrl String?
   darkLogoUrl  String?
   homePageText String    @default("A safe space to share burdens, request intercession, and lift each other up in prayer.")
+  timezone     String    @default("UTC")
   updatedAt    DateTime  @updatedAt
+}
+
+enum ActivityType {
+  ORG_CREATED
+  ORG_UPDATED
+  PRAYER_POSTED
+  CHAIN_CREATED
+  CHAIN_UPDATED
+  CHAIN_SIGNUP
+  CHAIN_CANCEL
+  THEME_UPDATED
+  MEMBER_ROLE_UPDATED
+  EMAIL_SENT
+}
+
+model ActivityLog {
+  id             String       @id @default(cuid())
+  type           ActivityType
+  message        String
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([type])
+  @@index([createdAt])
 }

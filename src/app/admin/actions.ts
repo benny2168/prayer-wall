@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logActivity } from "@/lib/activity_log";
+import { ActivityType } from "@prisma/client";
 
 interface AuthUser {
   id: string;
@@ -20,6 +22,7 @@ export async function createOrganization(formData: FormData) {
   }
 
   const name = formData.get("name") as string;
+  const timezone = formData.get("timezone") as string || "UTC";
 
   if (!name) return { error: "Name is required" };
 
@@ -41,9 +44,16 @@ export async function createOrganization(formData: FormData) {
       }
     }
 
-    await prisma.organization.create({
-      data: { name, slug },
+    const org = await prisma.organization.create({
+      data: { name, slug, timezone },
     });
+
+    await logActivity({
+      type: ActivityType.ORG_CREATED,
+      message: `Created organization: ${name}`,
+      userId: user.id
+    });
+
     revalidatePath("/admin/organizations");
     return { success: true };
   } catch (e) {
@@ -176,7 +186,7 @@ export async function createPrayerChain(formData: FormData) {
   }
 
   try {
-    await prisma.prayerChain.create({
+    const chain = await prisma.prayerChain.create({
       data: {
         title,
         description,
@@ -191,7 +201,16 @@ export async function createPrayerChain(formData: FormData) {
         isPublic,
         isActive,
       },
+      include: { organization: true }
     });
+
+    await logActivity({
+      type: ActivityType.CHAIN_CREATED,
+      message: `Created prayer chain: ${title}`,
+      userId: user.id,
+      organizationId: orgId
+    });
+
     revalidatePath("/admin/chains");
   } catch (e) {
     console.error(e);
@@ -647,3 +666,39 @@ export async function clearOrganizationBanner(orgId: string) {
     return { error: "Failed to clear banner." };
   }
 }
+
+export async function updateOrganizationTimezone(orgId: string, timezone: string) {
+  const session = await getServerSession(authOptions) as Session & { user?: AuthUser };
+  const user = session?.user;
+
+  if (!user) return { error: "Unauthorized." };
+
+  if (user.role !== "GLOBAL_ADMIN") {
+    const role = await prisma.organizationRole.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: user.id,
+          organizationId: orgId,
+        },
+      },
+    });
+
+    if (!role) {
+      return { error: "Unauthorized. You are not an admin of this organization." };
+    }
+  }
+
+  try {
+    await prisma.organization.update({
+      where: { id: orgId },
+      data: { timezone },
+    });
+
+    revalidatePath("/admin/organizations");
+    return { success: true };
+  } catch (e: any) {
+    console.error("updateOrganizationTimezone Error:", e);
+    return { error: `Failed to update timezone: ${e.message}` };
+  }
+}
+

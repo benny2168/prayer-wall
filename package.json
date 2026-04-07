@@ -6,6 +6,7 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
+    "cron": "node scripts/reminder-cron.js",
     "lint": "eslint"
   },
   "dependencies": {
@@ -13,6 +14,7 @@
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.5.0",
     "framer-motion": "^12.35.0",
+    "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "nodemailer": "^7.0.13",
