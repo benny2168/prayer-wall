@@ -73,9 +73,8 @@ export const authOptions: AuthOptions = {
         } as any;
       },
     }),
-    // Planning Center OAuth
     {
-      id: "planning-center",
+      id: "planningcenter",
       name: "Planning Center",
       type: "oauth",
       checks: ["state"],
@@ -180,7 +179,7 @@ export const authOptions: AuthOptions = {
       return session;
     },
     async signIn({ user, account, profile }: { user: any, account: any, profile?: any }) {
-      if (account?.provider === "planning-center" && user?.id && profile) {
+      if (account?.provider === "planningcenter" && user?.id && profile) {
         // Planning Center typically uses 'avatar_url'
         const attributes = profile?.data?.attributes || {};
         const image = attributes.avatar_url || attributes.avatar || attributes.photo_thumbnail_url;
