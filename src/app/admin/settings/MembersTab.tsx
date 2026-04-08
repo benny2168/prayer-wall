@@ -49,8 +49,19 @@ export default function MembersTab({
   organizations: Org[];
 }) {
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [activeTab, setActiveTab] = useState<"ALL" | "ADMINS" | "MEMBERS">("ALL");
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+
+  const filteredUsers = users.filter((u) => {
+    if (activeTab === "ADMINS") {
+      return u.role === "GLOBAL_ADMIN" || u.organizations.length > 0;
+    }
+    if (activeTab === "MEMBERS") {
+      return u.role === "USER" && u.organizations.length === 0;
+    }
+    return true;
+  });
 
   const toggleGlobalAdmin = async (user: User) => {
     const newRole = user.role === "GLOBAL_ADMIN" ? "USER" : "GLOBAL_ADMIN";
@@ -116,25 +127,39 @@ export default function MembersTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-[--color-text-base]">Members</h2>
+          <h2 className="text-2xl font-bold text-[--color-text-base]">Members</h2>
           <p className="text-[--color-text-muted] text-sm mt-1">
-            Manage who has access to the admin portal and at what level.
+            Manage your community and grant administrative privileges.
           </p>
         </div>
-        <span className="text-xs text-[--color-text-muted] bg-[--color-bg-panel] px-3 py-1 rounded-full border border-[--color-border-base]">
-          {users.length} user{users.length !== 1 ? "s" : ""}
-        </span>
+        
+        <div className="flex bg-[--color-bg-base]/50 p-1 rounded-xl border border-[--color-border-base]">
+          {(["ALL", "ADMINS", "MEMBERS"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === tab
+                  ? "bg-theme-600 text-white shadow-lg"
+                  : "text-[--color-text-muted] hover:text-[--color-text-base]"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {users.length === 0 ? (
-        <div className="text-center py-12 text-[--color-text-muted]">
-          No users have logged in yet. Users appear here after their first Planning Center login.
+      {filteredUsers.length === 0 ? (
+        <div className="text-center py-16 text-[--color-text-muted] bg-[--color-bg-base]/20 rounded-2xl border border-dashed border-[--color-border-base]">
+          <p className="text-lg">No {activeTab.toLowerCase()} found.</p>
+          <p className="text-sm mt-1">Users appear here after their first sign-in.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {users.map((user) => {
+          {filteredUsers.map((user) => {
             const isExpanded = expandedUser === user.id;
             const userOrgIds = new Set(user.organizations.map((o) => o.organization.id));
 

@@ -65,11 +65,23 @@ export const authOptions: AuthOptions = {
         // OTP valid, delete it so it can't be reused
         await prisma.memberOtp.delete({ where: { id: record.id } });
 
+        // Ensure user exists in the main User table so they show up in Admin > Members
+        const user = await prisma.user.upsert({
+          where: { email: normalizedEmail },
+          update: { name: record.name || "Verified Member" },
+          create: {
+            id: normalizedEmail, // Use email as ID for OTP users to keep things unique
+            email: normalizedEmail,
+            name: record.name || "Verified Member",
+            role: "USER"
+          }
+        });
+
         return {
-          id: normalizedEmail,
-          name: record.name || "Verified Member",
-          email: normalizedEmail,
-          role: "MEMBER",
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
         } as any;
       },
     }),

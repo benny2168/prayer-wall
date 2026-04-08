@@ -228,8 +228,8 @@ export default function LoginClient({ providers, localAdminUsername }: { provide
                   <div className="absolute inset-0 flex items-center" aria-hidden="true">
                     <div className="w-full border-t border-[--color-border-base]" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
-                    <span className="bg-[--color-bg-panel] px-4 text-[--color-text-muted]">Staff & Administrators</span>
+                  <div className="relative flex justify-center text-xs uppercase tracking-[0.2em] font-black">
+                    <span className="bg-[--color-bg-panel] px-6 text-[--color-text-muted] relative z-10">Staff & Administrators</span>
                   </div>
                 </div>
 
