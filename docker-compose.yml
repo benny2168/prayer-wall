@@ -19,8 +19,8 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://admin:admin123@db:5432/prayerwall?schema=public}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://prayer.server.mtcd.org}
+      - DATABASE_URL=postgresql://${DB_USER:-admin}:${DB_PASSWORD:-admin123}@db:5432/${DB_NAME:-prayerwall}?schema=public
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - TRUST_PROXY=true
       - PLANNING_CENTER_CLIENT_ID=${PLANNING_CENTER_CLIENT_ID}
