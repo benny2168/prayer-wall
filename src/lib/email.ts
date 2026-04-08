@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { prisma } from "./prisma";
 
 const smtpConfig = {
   host: process.env.SMTP_HOST || "smtp.office365.com",
@@ -12,11 +13,21 @@ const smtpConfig = {
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
-const THEME_CHERRY = "#881337";
+const DEFAULT_CHERRY = "#881337";
 const THEME_BG = "#f8fafc";
 const THEME_TEXT = "#1e293b";
 
-function getEmailTemplate(content: string, previewText: string) {
+async function getSiteThemeColor() {
+  try {
+    const settings = await prisma.siteSettings.findFirst();
+    return settings?.primaryColor || DEFAULT_CHERRY;
+  } catch (e) {
+    return DEFAULT_CHERRY;
+  }
+}
+
+async function getEmailTemplate(content: string, previewText: string) {
+  const primaryColor = await getSiteThemeColor();
   return `
     <!DOCTYPE html>
     <html>
@@ -33,7 +44,7 @@ function getEmailTemplate(content: string, previewText: string) {
                 <!-- Header -->
                 <tr>
                   <td align="center" style="padding: 40px 40px 20px 40px;">
-                    <div style="background-color: ${THEME_CHERRY}; width: 64px; height: 64px; border-radius: 16px; display: inline-block; text-align: center; line-height: 64px; margin-bottom: 24px;">
+                    <div style="background-color: ${primaryColor}; width: 64px; height: 64px; border-radius: 16px; display: inline-block; text-align: center; line-height: 64px; margin-bottom: 24px;">
                        <span style="font-size: 32px; vertical-align: middle;">🙏</span>
                     </div>
                     <h1 style="margin: 0; color: ${THEME_TEXT}; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; font-family: serif;">THE PRAYER WALL</h1>
@@ -67,11 +78,12 @@ function getEmailTemplate(content: string, previewText: string) {
 
 export async function sendPrayedForNotification(toEmail: string, prayerText: string, prayedByName: string = "Someone") {
   if (!process.env.SMTP_USER) return;
+  const primaryColor = await getSiteThemeColor();
 
   const content = `
-    <h2 style="margin: 0 0 16px 0; color: ${THEME_CHERRY}; font-size: 20px; font-weight: 700;">Encouragement for you</h2>
+    <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Encouragement for you</h2>
     <p style="margin: 0 0 24px 0;">Hi there, we have some beautiful news. <strong>${prayedByName}</strong> just visited the Prayer Wall and spent time lifting up your request in prayer:</p>
-    <div style="background-color: #fff1f2; border-left: 4px solid ${THEME_CHERRY}; padding: 20px; margin: 0 0 24px 0; border-radius: 0 8px 8px 0; font-style: italic; color: #4c0519;">
+    <div style="background-color: ${primaryColor}10; border-left: 4px solid ${primaryColor}; padding: 20px; margin: 0 0 24px 0; border-radius: 0 8px 8px 0; font-style: italic; color: ${primaryColor};">
       "${prayerText}"
     </div>
     <p style="margin: 0;">May you feel the peace and strength of being supported by your community today.</p>
@@ -81,7 +93,7 @@ export async function sendPrayedForNotification(toEmail: string, prayerText: str
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
     subject: `${prayedByName} just prayed for you!`,
-    html: getEmailTemplate(content, "Someone prayed for you"),
+    html: await getEmailTemplate(content, "Someone prayed for you"),
   };
 
   try {
@@ -93,14 +105,15 @@ export async function sendPrayedForNotification(toEmail: string, prayerText: str
 
 export async function sendPrayerChainReminder(toEmail: string, name: string, chainTitle: string, timeString: string) {
   if (!process.env.SMTP_USER) return;
+  const primaryColor = await getSiteThemeColor();
 
   const content = `
-    <h2 style="margin: 0 0 16px 0; color: ${THEME_CHERRY}; font-size: 20px; font-weight: 700;">Upcoming Prayer Block</h2>
+    <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Upcoming Prayer Block</h2>
     <p style="margin: 0 0 16px 0;">Hi ${name},</p>
     <p style="margin: 0 0 24px 0;">This is a gentle reminder for the <strong>${chainTitle}</strong>. Your committed time to stand in the gap is approaching:</p>
     <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 24px; text-align: center; border-radius: 12px; margin-bottom: 24px;">
       <div style="font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px;">Scheduled Time</div>
-      <div style="font-size: 24px; font-weight: 800; color: ${THEME_CHERRY};">${timeString}</div>
+      <div style="font-size: 24px; font-weight: 800; color: ${primaryColor};">${timeString}</div>
     </div>
     <p style="margin: 0;">Thank you for your faithfulness and dedication to prayer.</p>
   `;
@@ -109,7 +122,7 @@ export async function sendPrayerChainReminder(toEmail: string, name: string, cha
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
     subject: `Reminder: Your upcoming prayer time for ${chainTitle}`,
-    html: getEmailTemplate(content, "Your prayer reminder"),
+    html: await getEmailTemplate(content, "Your prayer reminder"),
   };
 
   try {
@@ -121,12 +134,13 @@ export async function sendPrayerChainReminder(toEmail: string, name: string, cha
 
 export async function sendMemberOtp(toEmail: string, code: string) {
   if (!process.env.SMTP_USER) return;
+  const primaryColor = await getSiteThemeColor();
 
   const content = `
-    <h2 style="margin: 0 0 16px 0; color: ${THEME_CHERRY}; font-size: 20px; font-weight: 700;">Your Security Code</h2>
+    <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Your Security Code</h2>
     <p style="margin: 0 0 24px 0;">Use the verification code below to securely access your Prayer Wall account and manage your signups.</p>
     <div style="background-color: #f8fafc; border: 2px dashed #e2e8f0; padding: 32px; text-align: center; border-radius: 12px; margin-bottom: 24px;">
-      <div style="font-size: 48px; font-weight: 800; color: ${THEME_CHERRY}; letter-spacing: 12px; font-family: monospace; margin-left: 12px;">${code}</div>
+      <div style="font-size: 48px; font-weight: 800; color: ${primaryColor}; letter-spacing: 12px; font-family: monospace; margin-left: 12px;">${code}</div>
     </div>
     <p style="font-size: 14px; color: #64748b; margin: 0;">This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.</p>
   `;
@@ -135,7 +149,7 @@ export async function sendMemberOtp(toEmail: string, code: string) {
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
     subject: "Your Prayer Wall Login Code",
-    html: getEmailTemplate(content, "Verification Code"),
+    html: await getEmailTemplate(content, "Verification Code"),
   };
 
   try {
