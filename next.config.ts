@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '25mb',
     },
+    middlewareClientMaxBodySize: '25mb',
   },
   output: 'standalone',
   images: {
