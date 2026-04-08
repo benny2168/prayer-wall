@@ -31,14 +31,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder /app/public ./public
 
-# Optionally copy the standalone output if Next.js config output is 'standalone'
-# Usually App Router does not create 'standalone' by default unless configured
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
 # Ensure uploads directory is writeable by nextjs user
 RUN mkdir -p public/uploads && chown -R nextjs:nodejs public/uploads
@@ -50,8 +54,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Note: Before running the Next.js server, we should push to DB. This can be run via a shell script entrypoint, 
-# or handled separately. For simplicity, we just start the app.
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
-
-CMD ["sh", "-c", "npm run cron & npm start"]
+# Note: server.js is created by Next.js standalone output
+CMD ["sh", "-c", "node scripts/reminder-cron.js & node server.js"]
