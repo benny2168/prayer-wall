@@ -66,6 +66,13 @@ export default async function NewChainPage() {
                 type="file" 
                 name="thumbnail" 
                 accept="image/*" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && file.size > 25 * 1024 * 1024) {
+                    alert("File is too large. Max size is 25MB.");
+                    e.target.value = "";
+                  }
+                }}
                 className="input-field py-2 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
               />
             </div>

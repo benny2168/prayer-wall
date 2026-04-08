@@ -240,6 +240,12 @@ export default function ThemeTab({ initial }: { initial: ThemeSettings }) {
               const file = e.target.files?.[0];
               if (!file) return;
               
+              if (file.size > 25 * 1024 * 1024) {
+                alert("File is too large. Max size is 25MB.");
+                e.target.value = "";
+                return;
+              }
+              
               const formData = new FormData();
               formData.append("logo", file);
               
@@ -302,6 +308,12 @@ export default function ThemeTab({ initial }: { initial: ThemeSettings }) {
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
+              
+              if (file.size > 25 * 1024 * 1024) {
+                alert("File is too large. Max size is 25MB.");
+                e.target.value = "";
+                return;
+              }
               
               const formData = new FormData();
               formData.append("logo", file);

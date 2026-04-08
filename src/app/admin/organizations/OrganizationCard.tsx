@@ -17,6 +17,12 @@ export default function OrganizationCard({ org, isAdmin }: OrgProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 25 * 1024 * 1024) {
+      alert("File is too large. Max size is 25MB.");
+      e.target.value = "";
+      return;
+    }
+
     setLoading(true);
     const formData = new FormData();
     formData.append("banner", file);
