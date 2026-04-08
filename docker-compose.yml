@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: prayerwall
     volumes:
-      - ${DATA_BASE_PATH:-./data}/db:/var/lib/postgresql/data
+      - ${DB_DATA_PATH:-./data/db}:/var/lib/postgresql/data
 
   web:
     image: ${DOCKER_USERNAME:-mtcdtech}/prayer-wall:latest
@@ -40,4 +40,4 @@ services:
     depends_on:
       - db
     volumes:
-      - ${DATA_BASE_PATH:-./data}/uploads:/app/data/uploads
+      - ${UPLOAD_DATA_PATH:-./data/uploads}:/app/data/uploads
