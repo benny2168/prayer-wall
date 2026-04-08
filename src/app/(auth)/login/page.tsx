@@ -8,5 +8,5 @@ export default async function LoginPage() {
     type: p.type,
   }));
 
-  return <LoginClient providers={providers} />;
+  return <LoginClient providers={providers} localAdminUsername={process.env.LOCAL_ADMIN_USERNAME || "admin"} />;
 }

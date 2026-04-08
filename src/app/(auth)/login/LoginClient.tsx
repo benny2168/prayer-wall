@@ -7,7 +7,7 @@ import { HandHeart, Mail, KeyRound, Loader2, ArrowLeft, Shield } from "lucide-re
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function LoginClient({ providers }: { providers: Record<string, any> }) {
+export default function LoginClient({ providers, localAdminUsername }: { providers: Record<string, any>, localAdminUsername: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -15,6 +15,8 @@ export default function LoginClient({ providers }: { providers: Record<string, a
   const [step, setStep] = useState<"EMAIL" | "OTP">("EMAIL");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const isAdminSession = email.toLowerCase().trim() === localAdminUsername.toLowerCase().trim();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -28,6 +30,23 @@ export default function LoginClient({ providers }: { providers: Record<string, a
     setError("");
     
     try {
+      if (isAdminSession) {
+        // Direct password login for local admin
+        const res = await signIn("credentials", {
+          username: email,
+          password: password,
+          redirect: false,
+        });
+
+        if (res?.error) {
+          throw new Error("Invalid admin password");
+        }
+        
+        router.push(callbackUrl.startsWith("/admin") ? callbackUrl : "/admin");
+        router.refresh();
+        return;
+      }
+
       const res = await fetch("/api/member/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,11 +129,11 @@ export default function LoginClient({ providers }: { providers: Record<string, a
                   {error && <p className="text-red-500 text-sm font-medium text-center bg-red-500/10 py-2 rounded-lg">{error}</p>}
                   
                   <div>
-                    <label className="block text-sm font-medium text-[--color-text-base] mb-1.5">Email Address</label>
+                    <label className="block text-sm font-medium text-[--color-text-base] mb-1.5">Email Address / Username</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 w-5 h-5 text-[--color-text-muted] pointer-events-none" />
                       <input
-                        type="email"
+                        type="text"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -124,12 +143,36 @@ export default function LoginClient({ providers }: { providers: Record<string, a
                     </div>
                   </div>
 
+                  <AnimatePresence>
+                    {isAdminSession && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <label className="block text-sm font-medium text-[--color-text-base] mb-1.5 mt-4">Password</label>
+                        <div className="relative">
+                          <KeyRound className="absolute left-3 top-3 w-5 h-5 text-[--color-text-muted] pointer-events-none" />
+                          <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full pl-10 pr-4 py-3 bg-[--color-bg-base] border border-[--color-border-base] rounded-xl focus:ring-2 focus:ring-theme-500 focus:border-theme-500 text-[--color-text-base] transition-all outline-none"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <button
                     type="submit"
-                    disabled={loading || !email}
+                    disabled={loading || !email || (isAdminSession && !password)}
                     className="w-full bg-[--color-text-base] text-[--color-bg-base] hover:opacity-90 font-medium py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Login Code"}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isAdminSession ? "Login as Admin" : "Send Login Code")}
                   </button>
                 </motion.form>
               )}
@@ -182,10 +225,10 @@ export default function LoginClient({ providers }: { providers: Record<string, a
             {step === "EMAIL" && oauthProviders.length > 0 && (
               <div className="mt-8">
                 <div className="relative mb-6">
-                  <div className="absolute inset-0 flex items-center">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
                     <div className="w-full border-t border-[--color-border-base]" />
                   </div>
-                  <div className="relative flex justify-center text-xs">
+                  <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
                     <span className="bg-[--color-bg-panel] px-4 text-[--color-text-muted]">Staff & Administrators</span>
                   </div>
                 </div>
