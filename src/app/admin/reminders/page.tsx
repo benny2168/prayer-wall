@@ -127,6 +127,7 @@ export default async function AdminRemindersPage() {
           </div>
         )}
         </div>
+        </div>
       </div>
     </div>
   );
