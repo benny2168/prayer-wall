@@ -19,12 +19,24 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - DATABASE_URL=postgresql://admin:admin123@db:5432/prayerwall?schema=public
+      - DATABASE_URL=${DATABASE_URL:-postgresql://admin:admin123@db:5432/prayerwall?schema=public}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-https://prayer.server.mtcd.org}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - TRUST_PROXY=true
       - PLANNING_CENTER_CLIENT_ID=${PLANNING_CENTER_CLIENT_ID}
       - PLANNING_CENTER_CLIENT_SECRET=${PLANNING_CENTER_CLIENT_SECRET}
+      - PLANNING_CENTER_PAT_ID=${PLANNING_CENTER_PAT_ID}
+      - PLANNING_CENTER_PAT_SECRET=${PLANNING_CENTER_PAT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - MEMBER_SESSION_SECRET=${MEMBER_SESSION_SECRET}
+      - CRON_SECRET=${CRON_SECRET}
+      - LOCAL_ADMIN_USERNAME=${LOCAL_ADMIN_USERNAME}
+      - LOCAL_ADMIN_PASSWORD=${LOCAL_ADMIN_PASSWORD}
+      - SITE_URL=${SITE_URL}
     depends_on:
       - db
     volumes:
