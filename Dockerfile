@@ -30,9 +30,12 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy public and static assets into the standalone directory
-# Standalone mode expects this exact structure to serve static files
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
+
+# Create .next directory and grant permissions for image optimization cache
+RUN mkdir -p .next && chown nextjs:nodejs .next
+
 COPY --from=builder /app/.next/standalone ./
 
 # Also copy them with correct permissions just in case
