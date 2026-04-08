@@ -13,6 +13,36 @@ interface AuthUser {
   role: string;
 }
 
+/**
+ * Resilient helper to handle file uploads in Docker/Synology environments
+ */
+async function saveUploadedFile(file: File, prefix: string): Promise<{ url: string; error?: string }> {
+  if (!file || file.size === 0) return { url: "", error: "No file provided" };
+  
+  try {
+    const fs = require('fs/promises');
+    const path = require('path');
+    
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
+    const fileName = `${prefix}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const filePath = path.join(uploadDir, fileName);
+
+    // Ensure directory exists with recursive mkdir
+    await fs.mkdir(uploadDir, { recursive: true });
+    
+    console.log(`[UploadHelper] Writing ${prefix} to: ${filePath}`);
+    await fs.writeFile(filePath, buffer);
+    
+    return { url: `/uploads/${fileName}` };
+  } catch (e: any) {
+    console.error(`[UploadHelper] CRITICAL FAILURE for ${prefix}:`, e);
+    return { url: "", error: e.message || "FileSystem Error" };
+  }
+}
+
 export async function createOrganization(formData: FormData) {
   const session = await getServerSession(authOptions) as Session & { user?: AuthUser };
   const user = session?.user;
@@ -176,13 +206,9 @@ export async function createPrayerChain(formData: FormData) {
   let thumbnailUrl = null;
 
   if (thumbnailFile && thumbnailFile.size > 0) {
-    const bytes = await thumbnailFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const fileName = `${Date.now()}-${thumbnailFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const path = `public/uploads/${fileName}`;
-    const fs = require('fs/promises');
-    await fs.writeFile(path, buffer);
-    thumbnailUrl = `/uploads/${fileName}`;
+    const upload = await saveUploadedFile(thumbnailFile, 'chain');
+    if (upload.error) return { error: `Thumbnail upload failed: ${upload.error}` };
+    thumbnailUrl = upload.url;
   }
 
   try {
@@ -259,14 +285,9 @@ export async function updatePrayerChain(chainId: string, dataOrFormData: any) {
     const thumbnail = isFormData ? (dataOrFormData as FormData).get("thumbnail") : data.thumbnail;
     
     if (thumbnail && typeof thumbnail === 'object' && 'size' in (thumbnail as any) && (thumbnail as any).size > 0) {
-      const file = thumbnail as File;
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const path = `public/uploads/${fileName}`;
-      const fs = require('fs/promises');
-      await fs.writeFile(path, buffer);
-      thumbnailUrl = `/uploads/${fileName}`;
+      const upload = await saveUploadedFile(thumbnail as File, 'chain');
+      if (upload.error) return { error: `Update failed: ${upload.error}` };
+      thumbnailUrl = upload.url;
     }
 
     console.log(`[DEBUG] Updating Chain ${chainId}`, {
@@ -538,33 +559,10 @@ export async function updateSiteLogo(formData: FormData, mode: 'light' | 'dark')
 
   try {
     const file = formData.get("logo") as File;
-    if (!file || file.size === 0) return { error: "No file provided" };
+    const upload = await saveUploadedFile(file, `logo-${mode}`);
+    if (upload.error) return { error: upload.error };
     
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    
-    const fileName = `logo-${mode}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    
-    // Use absolute path to avoid ambiguity in Docker environments
-    const fs = require('fs/promises');
-    const path = require('path');
-    
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    const filePath = path.join(uploadDir, fileName);
-
-    // Ensure directory exists
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      console.log(`[LogoUpload] Target directory verified: ${uploadDir}`);
-    } catch (e) {
-      console.error(`[LogoUpload] Failed to create/verify directory: ${uploadDir}`, e);
-    }
-
-    console.log(`[LogoUpload] Attempting to write: ${filePath}`);
-    await fs.writeFile(filePath, buffer);
-    console.log(`[LogoUpload] Successfully wrote logo: ${fileName}`);
-    
-    const logoUrl = `/uploads/${fileName}`;
+    const logoUrl = upload.url;
 
     await prisma.siteSettings.upsert({
       where: { id: "default" },
@@ -627,15 +625,10 @@ export async function updateOrganizationBanner(orgId: string, formData: FormData
 
   try {
     const file = formData.get("banner") as File;
-    if (!file || file.size === 0) return { error: "No file provided" };
+    const upload = await saveUploadedFile(file, `banner-${orgId}`);
+    if (upload.error) return { error: upload.error };
     
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const fileName = `banner-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const path = `public/uploads/${fileName}`;
-    const fs = require('fs/promises');
-    await fs.writeFile(path, buffer);
-    const bannerUrl = `/uploads/${fileName}`;
+    const bannerUrl = upload.url;
 
     await prisma.organization.update({
       where: { id: orgId },
