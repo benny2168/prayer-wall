@@ -43,8 +43,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.js ./prisma.config.js
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
-# Ensure uploads directory is writeable by nextjs user
-RUN mkdir -p public/uploads && chown -R nextjs:nodejs public/uploads
+# Set the final permissions for the entire app directory to ensure Next.js can write cache/logs
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
