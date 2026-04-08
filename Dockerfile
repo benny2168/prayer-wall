@@ -53,4 +53,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Note: server.js is created by Next.js standalone output
-CMD ["sh", "-c", "node scripts/reminder-cron.js & node server.js"]
+CMD ["/bin/sh", "-c", "npx prisma db push --accept-data-loss && node scripts/reminder-cron.js & node server.js"]

@@ -54,15 +54,13 @@ docker buildx build --platform linux/amd64 -t mtcdtech/prayer-wall:latest --push
 
 ---
 
-## 4. Initialize the Database (First-time only)
+## 4. Automatic Initialization
 
-Once the stack is "Healthy":
-1. Click the **prayer-wall-web** container.
-2. Click **Console** -> **Connect** (Ensure you select **`/bin/sh`**).
-3. Run the following command to create the database tables:
-   
-   npx prisma db push
+The database is now **self-healing**. Every time the container starts, it automatically runs:
+- `npx prisma db push` (Updates the database schema)
+- `node scripts/reminder-cron.js` (Starts the email reminder system)
 
+**No manual console commands are required!**
 ---
 
 ## 5. Reverse Proxy Configuration
