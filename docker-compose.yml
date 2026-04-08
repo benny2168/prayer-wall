@@ -15,7 +15,7 @@ services:
       - ${DATA_BASE_PATH:-./data}/db:/var/lib/postgresql/data
 
   web:
-    image: ${DOCKER_USERNAME:-benny2168}/prayer-wall:latest
+    image: ${DOCKER_USERNAME:-mtcdtech}/prayer-wall:latest
     container_name: prayer-wall-web
     restart: always
     ports:
