@@ -224,9 +224,9 @@ export default function LoginClient({ providers, localAdminUsername }: { provide
             {/* Separator and OAuth Buttons */}
             {step === "EMAIL" && oauthProviders.length > 0 && (
               <div className="mt-8">
-                <div className="relative mb-6 flex items-center gap-4">
+                <div className="relative mt-10 mb-6 flex items-center gap-4">
                   <div className="flex-1 border-t border-[--color-border-base]" />
-                  <div className="text-xs uppercase tracking-[0.2em] font-black text-[--color-text-muted] whitespace-nowrap">
+                  <div className="text-[10px] uppercase tracking-[0.25em] font-black text-[--color-text-muted] whitespace-nowrap pt-0.5">
                     Staff & Administrators
                   </div>
                   <div className="flex-1 border-t border-[--color-border-base]" />
