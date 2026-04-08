@@ -542,10 +542,28 @@ export async function updateSiteLogo(formData: FormData, mode: 'light' | 'dark')
     
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    
     const fileName = `logo-${mode}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const path = `public/uploads/${fileName}`;
+    
+    // Use absolute path to avoid ambiguity in Docker environments
     const fs = require('fs/promises');
-    await fs.writeFile(path, buffer);
+    const path = require('path');
+    
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const filePath = path.join(uploadDir, fileName);
+
+    // Ensure directory exists
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      console.log(`[LogoUpload] Target directory verified: ${uploadDir}`);
+    } catch (e) {
+      console.error(`[LogoUpload] Failed to create/verify directory: ${uploadDir}`, e);
+    }
+
+    console.log(`[LogoUpload] Attempting to write: ${filePath}`);
+    await fs.writeFile(filePath, buffer);
+    console.log(`[LogoUpload] Successfully wrote logo: ${fileName}`);
+    
     const logoUrl = `/uploads/${fileName}`;
 
     await prisma.siteSettings.upsert({
@@ -560,8 +578,8 @@ export async function updateSiteLogo(formData: FormData, mode: 'light' | 'dark')
     revalidatePath("/", "layout"); // Revalidate entire app layout
     return { success: true };
   } catch (e: any) {
-    console.error("updateSiteLogo Error:", e);
-    return { error: `Failed to update logo: ${e.message}` };
+    console.error("[LogoUpload] CRITICAL ERROR:", e);
+    return { error: `Upload failed: ${e.message || "Unknown file system error"}` };
   }
 }
 
