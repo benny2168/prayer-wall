@@ -52,5 +52,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Note: server.js is created by Next.js standalone output
-CMD ["/bin/sh", "-c", "npx prisma db push --accept-data-loss && node scripts/reminder-cron.js & node server.js"]
+# Start the application - ensure DB push completes before server starts
+CMD ["/bin/sh", "-c", "DATABASE_URL=$DATABASE_URL npx prisma db push --accept-data-loss && (node scripts/reminder-cron.js &) && node server.js"]
