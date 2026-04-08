@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { generateThemedEmail } from "@/lib/email_utils";
+import { generateThemedEmail } from "@/lib/email_templates";
 import { Mail, CheckCircle, Clock, ShieldCheck, Monitor, Smartphone, Eye } from "lucide-react";
 
 type EmailType = "CONFIRMATION" | "REMINDER";
