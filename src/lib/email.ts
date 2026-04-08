@@ -13,16 +13,36 @@ const smtpConfig = {
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
-const DEFAULT_CHERRY = "#881337";
 const THEME_BG = "#f8fafc";
 const THEME_TEXT = "#1e293b";
+const DEFAULT_CHERRY = "#881337";
 
-async function getSiteThemeColor() {
+export function formatInTimezone(date: Date, timezone: string = "UTC") {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: timezone,
+    timeZoneName: "short"
+  }).format(date);
+}
+
+async function getSiteTheme() {
   try {
     const settings = await prisma.siteSettings.findFirst();
-    return settings?.primaryColor || DEFAULT_CHERRY;
+    const siteUrl = process.env.NEXTAUTH_URL || "";
+    let logoUrl = settings?.lightLogoUrl || settings?.darkLogoUrl;
+    if (logoUrl && !logoUrl.startsWith("http")) {
+      logoUrl = `${siteUrl}${logoUrl}`;
+    }
+    return {
+      primaryColor: settings?.primaryColor || DEFAULT_CHERRY,
+      logoUrl: logoUrl,
+    };
   } catch (e) {
-    return DEFAULT_CHERRY;
+    return { primaryColor: DEFAULT_CHERRY, logoUrl: null };
   }
 }
 
@@ -55,7 +75,7 @@ async function getTemplate(type: string, defaultSubject: string, defaultContent:
 }
 
 async function getEmailTemplate(content: string, previewText: string) {
-  const primaryColor = await getSiteThemeColor();
+  const { primaryColor, logoUrl } = await getSiteTheme();
   return `
     <!DOCTYPE html>
     <html>
@@ -68,14 +88,18 @@ async function getEmailTemplate(content: string, previewText: string) {
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${THEME_BG};">
           <tr>
             <td align="center" style="padding: 40px 20px;">
-              <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+              <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 <!-- Header -->
                 <tr>
                   <td align="center" style="padding: 40px 40px 20px 40px;">
-                    <div style="background-color: ${primaryColor}; width: 64px; height: 64px; border-radius: 16px; display: inline-block; text-align: center; line-height: 64px; margin-bottom: 24px;">
-                       <span style="font-size: 32px; vertical-align: middle;">🙏</span>
-                    </div>
-                    <h1 style="margin: 0; color: ${THEME_TEXT}; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; font-family: serif;">THE PRAYER WALL</h1>
+                    ${logoUrl ? `
+                      <img src="${logoUrl}" alt="Logo" style="height: 64px; width: auto; margin-bottom: 24px;" />
+                    ` : `
+                      <div style="background-color: ${primaryColor}; width: 64px; height: 64px; border-radius: 16px; display: inline-block; text-align: center; line-height: 64px; margin-bottom: 24px;">
+                        <span style="font-size: 32px; vertical-align: middle;">🙏</span>
+                      </div>
+                    `}
+                    <h1 style="margin: 0; color: ${THEME_TEXT}; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; font-family: serif; text-transform: uppercase;">THE PRAYER WALL</h1>
                   </td>
                 </tr>
                 <!-- Content -->
@@ -93,7 +117,7 @@ async function getEmailTemplate(content: string, previewText: string) {
                   </td>
                 </tr>
               </table>
-              <p style="margin-top: 24px; font-size: 12px; color: #94a3b8; text-align: center;">
+              <p style="margin-top: 24px; font-size: 11px; color: #94a3b8; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">
                 &copy; ${new Date().getFullYear()} MTCD Tech Initiative. All rights reserved.
               </p>
             </td>
@@ -104,12 +128,43 @@ async function getEmailTemplate(content: string, previewText: string) {
   `;
 }
 
+export async function sendSignupConfirmation(toEmail: string, name: string, chainTitle: string, dateStr: string) {
+  if (!process.env.SMTP_USER) return;
+  const { primaryColor } = await getSiteTheme();
+  const template = await getTemplate("SIGNUP", `Commitment Confirmed: ${chainTitle}`, "Thank you for your commitment to standing in the gap for our community.");
+
+  const htmlContent = `
+    <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Commitment Confirmed</h2>
+    <p style="margin: 0 0 16px 0;">Hi ${name},</p>
+    <p style="margin: 0 0 24px 0;">${template.content}</p>
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 24px; text-align: center; border-radius: 16px; margin-bottom: 24px;">
+      <div style="font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px;">Your Scheduled Time</div>
+      <div style="font-size: 18px; font-weight: 700; color: ${primaryColor};">${dateStr}</div>
+    </div>
+    <p style="margin: 0;">We will send you a reminder 15 minutes before your time slot begins.</p>
+  `;
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
+    to: toEmail,
+    subject: template.subject,
+    html: await getEmailTemplate(htmlContent, "Commitment Confirmed"),
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    await logEmail("SIGNUP", toEmail, template.subject);
+  } catch (error: any) {
+    console.error("Failed to send signup confirmation:", error);
+    await logEmail("SIGNUP", toEmail, template.subject, error.message);
+  }
+}
+
 export async function sendPrayedForNotification(toEmail: string, prayerText: string, prayedByName: string = "Someone") {
   if (!process.env.SMTP_USER) return;
-  const primaryColor = await getSiteThemeColor();
+  const { primaryColor } = await getSiteTheme();
   const template = await getTemplate("NOTIFICATION", `${prayedByName} just prayed for you!`, "May you feel the peace and strength of being supported by your community today.");
 
-  // Simple template replacement
   const finalContent = template.content
     .replace("{{name}}", prayedByName)
     .replace("{{prayer}}", prayerText);
@@ -141,7 +196,7 @@ export async function sendPrayedForNotification(toEmail: string, prayerText: str
 
 export async function sendPrayerChainReminder(toEmail: string, name: string, chainTitle: string, timeString: string) {
   if (!process.env.SMTP_USER) return;
-  const primaryColor = await getSiteThemeColor();
+  const { primaryColor } = await getSiteTheme();
   const template = await getTemplate("REMINDER", `Reminder: Your upcoming prayer time for ${chainTitle}`, "Thank you for your faithfulness and dedication to prayer.");
 
   const finalContent = template.content
@@ -178,7 +233,7 @@ export async function sendPrayerChainReminder(toEmail: string, name: string, cha
 
 export async function sendMemberOtp(toEmail: string, code: string) {
   if (!process.env.SMTP_USER) return;
-  const primaryColor = await getSiteThemeColor();
+  const { primaryColor } = await getSiteTheme();
   const template = await getTemplate("OTP", "Your Prayer Wall Login Code", "Use the verification code below to securely access your Prayer Wall account and manage your signups.");
 
   const htmlContent = `

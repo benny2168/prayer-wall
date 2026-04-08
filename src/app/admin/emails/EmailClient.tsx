@@ -178,11 +178,11 @@ export default function EmailClient({ audits, templates }: EmailClientProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {["OTP", "REMINDER", "NOTIFICATION"].map((type) => {
+            {["OTP", "REMINDER", "NOTIFICATION", "SIGNUP"].map((type) => {
               const template = templates.find(t => t.type === type) || {
                 type,
-                subject: type === "OTP" ? "Your Login Code" : type === "REMINDER" ? "Prayer Reminder" : "Encouragement",
-                content: type === "OTP" ? "Default code message..." : type === "REMINDER" ? "Default reminder..." : "Default encouragement..."
+                subject: type === "OTP" ? "Your Login Code" : type === "REMINDER" ? "Prayer Reminder" : type === "SIGNUP" ? "Signup Confirmation" : "Encouragement",
+                content: type === "OTP" ? "Default code message..." : type === "REMINDER" ? "Default reminder..." : type === "SIGNUP" ? "Default confirmation..." : "Default encouragement..."
               };
 
               return (

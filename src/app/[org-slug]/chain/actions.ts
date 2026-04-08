@@ -7,7 +7,7 @@ import { logActivity } from "@/lib/activity_log";
 import { ActivityType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getEmailTheme, formatInTimezone, generateThemedEmail } from "@/lib/email_utils";
+import { formatInTimezone, sendSignupConfirmation } from "@/lib/email";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -76,45 +76,8 @@ export async function signupForPrayerChainBlock(
 
     // Send confirmation email if they provided one
     if (signup.email) {
-      const { logoUrl, primaryColor } = await getEmailTheme();
       const dateStr = formatInTimezone(new Date(data.startTime), chain.organization.timezone);
-
-      try {
-        await transporter.sendMail({
-          from: `"${chain.organization.name}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-          to: signup.email,
-          subject: `Commitment Confirmed: ${chain.title}`,
-          html: generateThemedEmail({
-            title: "Commitment Confirmed",
-            name: signup.name,
-            logoUrl,
-            primaryColor,
-            content: `
-              <p>Thank you for committing to pray for <strong>${chain.title}</strong>.</p>
-              <div style="background-color: #f8fafc; padding: 24px; border-radius: 16px; margin: 24px 0; border: 1px solid #e2e8f0; text-align: center;">
-                <p style="margin: 0; font-size: 18px; font-weight: 700; color: ${primaryColor};">${dateStr}</p>
-              </div>
-              <p style="margin-bottom: 24px;">Your commitment helps ensure a continuous chain of prayer for our community.</p>
-              ${signup.wantsReminder 
-                ? `<div style="display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 14px;">
-                     <span>🔔</span>
-                     <span>We'll send you a reminder 15 minutes before your slot.</span>
-                   </div>` 
-                : ""
-              }
-            `,
-            footerText: `This is an automated message from the ${chain.organization.name} Prayer Wall.`
-          })
-        });
-
-        await logActivity({
-          type: ActivityType.EMAIL_SENT,
-          message: `Confirmation email sent to ${signup.email} for ${chain.title}`,
-          organizationId: chain.organizationId,
-        });
-      } catch (err) {
-        console.error("Failed to send confirmation email:", err);
-      }
+      await sendSignupConfirmation(signup.email, signup.name, chain.title, dateStr);
     }
 
     revalidatePath("/[org-slug]/chain", "page");

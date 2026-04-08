@@ -1,19 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
-import { getEmailTheme, formatInTimezone, generateThemedEmail } from "@/lib/email_utils";
+import { formatInTimezone, sendPrayerChainReminder } from "@/lib/email";
 import { logActivity } from "@/lib/activity_log";
 import { ActivityType } from "@prisma/client";
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
 
 export async function GET(request: Request) {
   // Simple bearer token check for security (set in .env)
@@ -51,31 +40,11 @@ export async function GET(request: Request) {
 
     console.log(`[Cron] Found ${pendingSignups.length} reminders to send.`);
 
-    const { logoUrl, primaryColor } = await getEmailTheme();
-
     for (const signup of pendingSignups) {
       const timeStr = formatInTimezone(signup.startTime, signup.prayerChain.organization.timezone);
 
       try {
-        await transporter.sendMail({
-          from: `"${signup.prayerChain.organization.name}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-          to: signup.email!,
-          subject: `Reminder: Your prayer slot starts at ${timeStr}`,
-          html: generateThemedEmail({
-            title: "Prayer Reminder",
-            name: signup.name,
-            logoUrl,
-            primaryColor,
-            content: `
-              <p>This is a reminder that your prayer slot for <strong>${signup.prayerChain.title}</strong> starts in 15 minutes.</p>
-              <div style="background-color: #f8fafc; padding: 24px; border-radius: 16px; margin: 24px 0; border: 1px solid #e2e8f0; text-align: center;">
-                <p style="margin: 0; font-size: 18px; font-weight: 700; color: ${primaryColor};">${timeStr}</p>
-              </div>
-              <p>Thank you for your faithful intercession. May you be blessed as you pray!</p>
-            `,
-            footerText: `This is an automated reminder from the ${signup.prayerChain.organization.name} Prayer Wall.`
-          })
-        });
+        await sendPrayerChainReminder(signup.email!, signup.name, signup.prayerChain.title, timeStr);
 
         await logActivity({
           type: ActivityType.EMAIL_SENT,
