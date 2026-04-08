@@ -60,9 +60,8 @@ Once the stack is "Healthy":
 1. Click the **prayer-wall-web** container.
 2. Click **Console** -> **Connect** (Ensure you select **`/bin/sh`**).
 3. Run the following command to create the database tables:
-   ```bash
+   
    npx prisma db push
-   ```
 
 ---
 
