@@ -11,8 +11,11 @@ services:
       POSTGRES_DB: prayerwall
     volumes:
       - ${DB_DATA_PATH:-./data/db}:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   web:
+    build: .
     image: ${DOCKER_USERNAME:-mtcdtech}/prayer-wall:latest
     container_name: prayer-wall-web
     restart: always

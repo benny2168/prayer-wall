@@ -13,23 +13,14 @@ const smtpConfig = {
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
+import { formatInTimezone, generateThemedEmail } from "@/lib/email_shared";
+export { formatInTimezone, generateThemedEmail };
+
 const THEME_BG = "#f8fafc";
 const THEME_TEXT = "#1e293b";
 const DEFAULT_CHERRY = "#881337";
 
-export function formatInTimezone(date: Date, timezone: string = "UTC") {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: timezone,
-    timeZoneName: "short"
-  }).format(date);
-}
-
-async function getSiteTheme() {
+export async function getSiteTheme() {
   try {
     const settings = await prisma.siteSettings.findFirst();
     const siteUrl = process.env.NEXTAUTH_URL || "";
@@ -76,6 +67,7 @@ async function getTemplate(type: string, defaultSubject: string, defaultContent:
 
 async function getEmailTemplate(content: string, previewText: string) {
   const { primaryColor, logoUrl } = await getSiteTheme();
+  // Using a simplified internal call for actual sending
   return `
     <!DOCTYPE html>
     <html>
