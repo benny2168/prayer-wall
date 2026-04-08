@@ -26,6 +26,34 @@ async function getSiteThemeColor() {
   }
 }
 
+async function logEmail(type: string, recipient: string, subject: string, error?: string) {
+  try {
+    await prisma.emailAudit.create({
+      data: {
+        type,
+        recipient,
+        subject,
+        status: error ? "FAILED" : "SENT",
+        error,
+      },
+    });
+  } catch (e) {
+    console.error("Failed to log email audit:", e);
+  }
+}
+
+async function getTemplate(type: string, defaultSubject: string, defaultContent: string) {
+  try {
+    const template = await prisma.emailTemplate.findUnique({ where: { type } });
+    return {
+      subject: template?.subject || defaultSubject,
+      content: template?.content || defaultContent,
+    };
+  } catch (e) {
+    return { subject: defaultSubject, content: defaultContent };
+  }
+}
+
 async function getEmailTemplate(content: string, previewText: string) {
   const primaryColor = await getSiteThemeColor();
   return `
@@ -79,35 +107,49 @@ async function getEmailTemplate(content: string, previewText: string) {
 export async function sendPrayedForNotification(toEmail: string, prayerText: string, prayedByName: string = "Someone") {
   if (!process.env.SMTP_USER) return;
   const primaryColor = await getSiteThemeColor();
+  const template = await getTemplate("NOTIFICATION", `${prayedByName} just prayed for you!`, "May you feel the peace and strength of being supported by your community today.");
 
-  const content = `
+  // Simple template replacement
+  const finalContent = template.content
+    .replace("{{name}}", prayedByName)
+    .replace("{{prayer}}", prayerText);
+
+  const htmlContent = `
     <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Encouragement for you</h2>
     <p style="margin: 0 0 24px 0;">Hi there, we have some beautiful news. <strong>${prayedByName}</strong> just visited the Prayer Wall and spent time lifting up your request in prayer:</p>
     <div style="background-color: ${primaryColor}10; border-left: 4px solid ${primaryColor}; padding: 20px; margin: 0 0 24px 0; border-radius: 0 8px 8px 0; font-style: italic; color: ${primaryColor};">
       "${prayerText}"
     </div>
-    <p style="margin: 0;">May you feel the peace and strength of being supported by your community today.</p>
+    <p style="margin: 0;">${finalContent}</p>
   `;
 
   const mailOptions = {
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
-    subject: `${prayedByName} just prayed for you!`,
-    html: await getEmailTemplate(content, "Someone prayed for you"),
+    subject: template.subject,
+    html: await getEmailTemplate(htmlContent, "Someone prayed for you"),
   };
 
   try {
     await transporter.sendMail(mailOptions);
-  } catch (error) {
+    await logEmail("NOTIFICATION", toEmail, template.subject);
+  } catch (error: any) {
     console.error("Failed to send prayed for notification:", error);
+    await logEmail("NOTIFICATION", toEmail, template.subject, error.message);
   }
 }
 
 export async function sendPrayerChainReminder(toEmail: string, name: string, chainTitle: string, timeString: string) {
   if (!process.env.SMTP_USER) return;
   const primaryColor = await getSiteThemeColor();
+  const template = await getTemplate("REMINDER", `Reminder: Your upcoming prayer time for ${chainTitle}`, "Thank you for your faithfulness and dedication to prayer.");
 
-  const content = `
+  const finalContent = template.content
+    .replace("{{name}}", name)
+    .replace("{{chain}}", chainTitle)
+    .replace("{{time}}", timeString);
+
+  const htmlContent = `
     <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Upcoming Prayer Block</h2>
     <p style="margin: 0 0 16px 0;">Hi ${name},</p>
     <p style="margin: 0 0 24px 0;">This is a gentle reminder for the <strong>${chainTitle}</strong>. Your committed time to stand in the gap is approaching:</p>
@@ -115,30 +157,33 @@ export async function sendPrayerChainReminder(toEmail: string, name: string, cha
       <div style="font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px;">Scheduled Time</div>
       <div style="font-size: 24px; font-weight: 800; color: ${primaryColor};">${timeString}</div>
     </div>
-    <p style="margin: 0;">Thank you for your faithfulness and dedication to prayer.</p>
+    <p style="margin: 0;">${finalContent}</p>
   `;
 
   const mailOptions = {
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
-    subject: `Reminder: Your upcoming prayer time for ${chainTitle}`,
-    html: await getEmailTemplate(content, "Your prayer reminder"),
+    subject: template.subject,
+    html: await getEmailTemplate(htmlContent, "Your prayer reminder"),
   };
 
   try {
     await transporter.sendMail(mailOptions);
-  } catch (error) {
+    await logEmail("REMINDER", toEmail, template.subject);
+  } catch (error: any) {
     console.error("Failed to send chain reminder:", error);
+    await logEmail("REMINDER", toEmail, template.subject, error.message);
   }
 }
 
 export async function sendMemberOtp(toEmail: string, code: string) {
   if (!process.env.SMTP_USER) return;
   const primaryColor = await getSiteThemeColor();
+  const template = await getTemplate("OTP", "Your Prayer Wall Login Code", "Use the verification code below to securely access your Prayer Wall account and manage your signups.");
 
-  const content = `
+  const htmlContent = `
     <h2 style="margin: 0 0 16px 0; color: ${primaryColor}; font-size: 20px; font-weight: 700;">Your Security Code</h2>
-    <p style="margin: 0 0 24px 0;">Use the verification code below to securely access your Prayer Wall account and manage your signups.</p>
+    <p style="margin: 0 0 24px 0;">${template.content}</p>
     <div style="background-color: #f8fafc; border: 2px dashed #e2e8f0; padding: 32px; text-align: center; border-radius: 12px; margin-bottom: 24px;">
       <div style="font-size: 48px; font-weight: 800; color: ${primaryColor}; letter-spacing: 12px; font-family: monospace; margin-left: 12px;">${code}</div>
     </div>
@@ -148,14 +193,16 @@ export async function sendMemberOtp(toEmail: string, code: string) {
   const mailOptions = {
     from: process.env.SMTP_FROM || `"Prayer Wall" <noreply@prayer-walls.com>`,
     to: toEmail,
-    subject: "Your Prayer Wall Login Code",
-    html: await getEmailTemplate(content, "Verification Code"),
+    subject: template.subject,
+    html: await getEmailTemplate(htmlContent, "Verification Code"),
   };
 
   try {
     await transporter.sendMail(mailOptions);
-  } catch (error) {
+    await logEmail("OTP", toEmail, template.subject);
+  } catch (error: any) {
     console.error("Failed to send OTP email:", error);
+    await logEmail("OTP", toEmail, template.subject, error.message);
     throw error;
   }
 }

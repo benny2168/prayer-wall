@@ -165,6 +165,28 @@ model SiteSettings {
   updatedAt    DateTime  @updatedAt
 }
 
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  type      String   @unique // OTP, REMINDER, NOTIFICATION
+  subject   String
+  content   String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model EmailAudit {
+  id        String   @id @default(cuid())
+  type      String   // OTP, REMINDER, NOTIFICATION
+  recipient String
+  subject   String
+  status    String   @default("SENT")
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([recipient])
+  @@index([type])
+  @@index([createdAt])
+}
+
 enum ActivityType {
   ORG_CREATED
   ORG_UPDATED
