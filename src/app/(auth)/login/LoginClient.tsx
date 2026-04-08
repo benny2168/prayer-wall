@@ -170,7 +170,7 @@ export default function LoginClient({ providers, localAdminUsername }: { provide
                   <button
                     type="submit"
                     disabled={loading || !email || (isAdminSession && !password)}
-                    className="w-full bg-[--color-text-base] text-[--color-bg-base] hover:opacity-90 font-medium py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full bg-theme-600 hover:bg-theme-500 text-white shadow-lg shadow-theme-500/20 font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isAdminSession ? "Login as Admin" : "Send Login Code")}
                   </button>
@@ -213,7 +213,7 @@ export default function LoginClient({ providers, localAdminUsername }: { provide
                   <button
                     type="submit"
                     disabled={loading || code.length < 6}
-                    className="w-full bg-[--color-text-base] text-[--color-bg-base] hover:opacity-90 font-medium py-3 rounded-xl transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full bg-theme-600 hover:bg-theme-500 text-white shadow-lg shadow-theme-500/20 font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Code"}
                   </button>
