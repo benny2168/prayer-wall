@@ -16,7 +16,7 @@ interface AuthUser {
 /**
  * Resilient helper to handle file uploads in Docker/Synology environments
  */
-async function saveUploadedFile(file: File, prefix: string): Promise<{ url: string; error?: string }> {
+async function saveUploadedFile(file: File, type: 'logo' | 'banner' | 'chain', identifier: string = ""): Promise<{ url: string; error?: string }> {
   if (!file || file.size === 0) return { url: "", error: "No file provided" };
   
   try {
@@ -26,19 +26,26 @@ async function saveUploadedFile(file: File, prefix: string): Promise<{ url: stri
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    const fileName = `${prefix}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const uploadDir = path.join(process.cwd(), 'data', 'uploads');
+    // Map internal types to organized folder names
+    const folderName = {
+      'logo': 'logos',
+      'banner': 'banners',
+      'chain': 'chains'
+    }[type];
+
+    const fileName = `${identifier || type}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const uploadDir = path.join(process.cwd(), 'data', 'uploads', folderName);
     const filePath = path.join(uploadDir, fileName);
 
     // Ensure directory exists with recursive mkdir
     await fs.mkdir(uploadDir, { recursive: true });
     
-    console.log(`[UploadHelper] Writing ${prefix} to: ${filePath}`);
+    console.log(`[UploadHelper] Writing ${type} to organized path: ${filePath}`);
     await fs.writeFile(filePath, buffer);
     
-    return { url: `/api/uploads/${fileName}` };
+    return { url: `/api/uploads/${folderName}/${fileName}` };
   } catch (e: any) {
-    console.error(`[UploadHelper] CRITICAL FAILURE for ${prefix}:`, e);
+    console.error(`[UploadHelper] CRITICAL FAILURE for ${type}:`, e);
     return { url: "", error: e.message || "FileSystem Error" };
   }
 }
@@ -559,7 +566,7 @@ export async function updateSiteLogo(formData: FormData, mode: 'light' | 'dark')
 
   try {
     const file = formData.get("logo") as File;
-    const upload = await saveUploadedFile(file, `logo-${mode}`);
+    const upload = await saveUploadedFile(file, 'logo', `site-${mode}`);
     if (upload.error) return { error: upload.error };
     
     const logoUrl = upload.url;
@@ -625,7 +632,7 @@ export async function updateOrganizationBanner(orgId: string, formData: FormData
 
   try {
     const file = formData.get("banner") as File;
-    const upload = await saveUploadedFile(file, `banner-${orgId}`);
+    const upload = await saveUploadedFile(file, 'banner', `org-${orgId}`);
     if (upload.error) return { error: upload.error };
     
     const bannerUrl = upload.url;
