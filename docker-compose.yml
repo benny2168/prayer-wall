@@ -40,4 +40,4 @@ services:
     depends_on:
       - db
     volumes:
-      - ${DATA_BASE_PATH:-./data}/uploads:/app/public/uploads
+      - ${DATA_BASE_PATH:-./data}/uploads:/app/data/uploads

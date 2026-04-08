@@ -27,7 +27,7 @@ async function saveUploadedFile(file: File, prefix: string): Promise<{ url: stri
     const buffer = Buffer.from(bytes);
     
     const fileName = `${prefix}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const uploadDir = path.join(process.cwd(), 'data', 'uploads');
     const filePath = path.join(uploadDir, fileName);
 
     // Ensure directory exists with recursive mkdir
@@ -36,7 +36,7 @@ async function saveUploadedFile(file: File, prefix: string): Promise<{ url: stri
     console.log(`[UploadHelper] Writing ${prefix} to: ${filePath}`);
     await fs.writeFile(filePath, buffer);
     
-    return { url: `/uploads/${fileName}` };
+    return { url: `/api/uploads/${fileName}` };
   } catch (e: any) {
     console.error(`[UploadHelper] CRITICAL FAILURE for ${prefix}:`, e);
     return { url: "", error: e.message || "FileSystem Error" };
